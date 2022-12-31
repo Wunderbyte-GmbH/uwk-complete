@@ -63,13 +63,18 @@ $string['managesubscriptions'] = 'Event monitoring';
 $string['managerules'] = 'Event monitoring rules';
 $string['messageprovider:notification'] = 'Notifications of rule subscriptions';
 $string['messagetemplate'] = 'Notification message';
+//2020-02-21 stefan.killian@donau-uni.ac.at, begin changes new placeholder for event monitoring, changes: Username, Relatedusername, Coursename
 $string['messagetemplate_help'] = 'A notification message is sent to subscribers once the notification threshold has been reached. It can include any or all of the following placeholders:
 
 * Link to the location of the event {link}
 * Link to the area monitored {modulelink}
 * Rule name {rulename}
 * Description {description}
+* Coursename {coursename}<br />
+* Username {username}<br />
+* Related Username {relatedusername}<br />
 * Event {eventname}';
+//2020-02-21 end changes
 $string['messagetemplate_link'] = 'admin/tool/monitor/managerules';
 $string['moduleinstance'] = 'Instance';
 $string['monitorenabled'] = 'Event monitoring is currently enabled. ';

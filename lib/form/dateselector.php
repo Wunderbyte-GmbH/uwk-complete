@@ -280,13 +280,24 @@ class MoodleQuickForm_date_selector extends MoodleQuickForm_group {
                 $valuearray += $thisexport;
             }
         }
-        if (count($valuearray) && isset($valuearray['year'])) {
+        // harald.bamberger@donau-uni.ac.at 20191107 begin
+        if($this->_options['optional']) {
+            // If checkbox is on, the value is zero, so go no further
+            if(empty($valuearray['enabled'])) {
+                return $this->_prepareValue(0, $assoc);
+            }
+        }
+	// harald.bamberger@donau-uni.ac.at 20191107 end
+	if (count($valuearray) && isset($valuearray['year'])) {
+	    /*
+	    // harald.bamberger@donau-uni.ac.at 20191107 original
             if($this->_options['optional']) {
                 // If checkbox is on, the value is zero, so go no further
                 if(empty($valuearray['enabled'])) {
                     return $this->_prepareValue(0, $assoc);
                 }
             }
+	    */
             // Get the calendar type used - see MDL-18375.
             $calendartype = \core_calendar\type_factory::get_calendar_instance();
             $gregoriandate = $calendartype->convert_to_gregorian($valuearray['year'], $valuearray['month'], $valuearray['day']);

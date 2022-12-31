@@ -115,6 +115,10 @@ class eventobservers {
             $eventobj->link = '';
         }
         $eventobj->courseid = $eventdata['courseid'];
+        //2020-02-21 stefan.killian@donau-uni.ac.at, begin changes new placeholder for event monitoring
+        $eventobj->userid = $eventdata['userid'];
+        $eventobj->relateduserid = $eventdata['relateduserid'];
+        //2020-02-21 end changes
         $eventobj->timecreated = $eventdata['timecreated'];
 
         $this->buffer[] = $eventobj;

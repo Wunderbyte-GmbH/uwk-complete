@@ -1952,7 +1952,8 @@ function set_user_preference($name, $value, $user = null) {
     }
     // Value column maximum length is 1333 characters.
     $value = (string)$value;
-    if (core_text::strlen($value) > 1333) {
+    //if (core_text::strlen($value) > 1333) { // original
+    if (core_text::strlen($value) > 2047) { // changed to 2047 (default: 1333) by G. Schwed according to MDL-30668; also raised db-field in mdl_user_preferences to 2048
         throw new coding_exception('Invalid value in set_user_preference() call, value is is too long for the value column');
     }
 

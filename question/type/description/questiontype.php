@@ -41,7 +41,8 @@ class qtype_description extends question_type {
     }
 
     public function is_usable_by_random() {
-        return false;
+//      return false; // original
+        return true; // change to 'true' by G. Schwed, 2018-02-19; default: 'false'
     }
 
     public function can_analyse_responses() {

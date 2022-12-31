@@ -160,6 +160,10 @@ function quiz_create_attempt(quiz $quizobj, $attemptnumber, $lastattempt, $timen
 function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
                                 $questionids = array(), $forcedvariantsbyslot = array()) {
 
+    // [gtn, Schwed]
+    $GLOBALS['gtn_quizobj'] =  $quizobj;
+    // [/gtn, Schwed]
+
     // Usages for this user's previous quiz attempts.
     $qubaids = new \mod_quiz\question\qubaids_for_users_attempts(
             $quizobj->get_quizid(), $attempt->userid);

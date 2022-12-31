@@ -51,6 +51,7 @@ class filter_tidy extends moodle_text_filter {
                  'drop-empty-paras' => true,
                  'indent' => true,
                  'quiet' => true,
+		 'wrap' => 0, // harald.bamberger@donau-uni.ac.at 20190301 fix simplecertificate pdf generation
         );
 
     /// Do a quick check using strpos to avoid unnecessary work

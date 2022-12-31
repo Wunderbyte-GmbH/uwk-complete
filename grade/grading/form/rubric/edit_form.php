@@ -69,6 +69,11 @@ class gradingform_rubric_editrubric extends moodleform {
         $element = $form->addElement('rubriceditor', 'rubric', get_string('rubric', 'gradingform_rubric'));
         $form->setType('rubric', PARAM_RAW);
 
+        // 20200226 harald.bamberger@donau-uni.ac.at add field for custom css class begin
+        $form->addElement('text', 'rubric[options][scdllcssclass]', get_string('scdllcssclass', 'gradingform_rubric'));
+        $form->setType('rubric[options][scdllcssclass]', PARAM_TEXT);
+        // 20200226 harald.bamberger@donau-uni.ac.at add field for custom css class end
+        
         $buttonarray = array();
         $buttonarray[] = &$form->createElement('submit', 'saverubric', get_string('saverubric', 'gradingform_rubric'));
         if ($this->_customdata['allowdraft']) {

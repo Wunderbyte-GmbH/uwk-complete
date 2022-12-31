@@ -270,8 +270,9 @@ class manager {
      */
     public static function get_course_search_url() {
         if (self::is_global_search_enabled()) {
-            $searchurl = '/search/index.php';
-        } else {
+            //$searchurl = '/search/index.php'; // original
+            $searchurl = '/course/search.php'; // 20210225 harald.bamberger@donau-uni.ac.at use regular course search although solr is enabled
+	} else {
             $searchurl = '/course/search.php';
         }
 

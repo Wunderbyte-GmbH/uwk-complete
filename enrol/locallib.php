@@ -411,6 +411,7 @@ class course_enrolment_manager {
                 }
             }
             $conditions[] = $DB->sql_fullname('u.firstname', 'u.lastname');
+            $conditions[] = $DB->sql_fullname('u.lastname', 'u.firstname'); // harald.bamberger@donau-uni.ac.at 20190226
             if ($searchanywhere) {
                 $searchparam = '%' . $search . '%';
             } else {

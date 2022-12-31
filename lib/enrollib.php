@@ -675,7 +675,9 @@ function enrol_get_my_courses($fields = null, $sort = null, $limit = 0, $coursei
 
     if (isset($USER->loginascontext) and $USER->loginascontext->contextlevel == CONTEXT_COURSE) {
         // list _only_ this course - anything else is asking for trouble...
-        $wheres[] = "courseid = :loginas";
+        //$wheres[] = "courseid = :loginas"; // original
+	// harald.bamberger@donau-uni.ac.at 20201008 address dmlexception when loggedin as user has hidden courses
+        $wheres[] = "c.id = :loginas";
         $params['loginas'] = $USER->loginascontext->instanceid;
     }
 

@@ -92,7 +92,8 @@ class profile_field_datetime extends profile_field_base {
         if (!empty($this->field->param3) && count($datetime) == 6) {
             return make_timestamp($datetime[0], $datetime[1], $datetime[2], $datetime[3], $datetime[4], $datetime[5]);
         } else {
-            return make_timestamp($datetime[0], $datetime[1], $datetime[2]);
+            //return make_timestamp($datetime[0], $datetime[1], $datetime[2]); // original
+            return make_timestamp($datetime[0], $datetime[1], $datetime[2]) + 60*60*12; // added 12h by G. Schwed (DUK) to solve date change with summer/winter time
         }
     }
 

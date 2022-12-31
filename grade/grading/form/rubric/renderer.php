@@ -392,6 +392,10 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
                 $classsuffix = ' view';  break;
         }
 
+        // 20200226 harald.bamberger@donau-uni.ac.at add field for custom css class begin
+        $classsuffix .= (isset($options['scdllcssclass'])) ? ' ' . $options['scdllcssclass'] : '';
+        // 20200226 harald.bamberger@donau-uni.ac.at add field for custom css class end
+        
         $rubrictemplate = html_writer::start_tag('div', array('id' => 'rubric-{NAME}', 'class' => 'clearfix gradingform_rubric'.$classsuffix));
 
         // Rubric table.

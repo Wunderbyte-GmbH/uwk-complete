@@ -99,8 +99,18 @@ class message_output_email extends message_output {
         }
 
         if ($emailuser) {
+/*
             $result = email_to_user($recipient, $eventdata->userfrom, $eventdata->subject, $eventdata->fullmessage,
+                $eventdata->fullmessagehtml, $attachment, $attachname, true, $replyto, $replytoname); // original
+*/
+	    // 20210302 harald.bamberger@donau-uni.ac.at always use text/plain for message notification so that mailclient handles links begin
+	    $tmprecipient = clone($recipient);
+	    if( $eventdata->name === 'instantmessage' ) {
+	        $tmprecipient->mailformat = 0;
+	    }
+            $result = email_to_user($tmprecipient, $eventdata->userfrom, $eventdata->subject, $eventdata->fullmessage,
                 $eventdata->fullmessagehtml, $attachment, $attachname, true, $replyto, $replytoname);
+	    // 20210302 harald.bamberger@donau-uni.ac.at always use text/plain for message notification so that mailclient handles links end
         } else {
             $messagetosend = new stdClass();
             $messagetosend->useridfrom = $eventdata->userfrom->id;

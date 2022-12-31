@@ -49,6 +49,8 @@ class backup_quiz_activity_structure_step extends backup_questions_activity_stru
             'questionsperpage', 'navmethod', 'shuffleanswers',
             'sumgrades', 'grade', 'timecreated',
             'timemodified', 'password', 'subnet', 'browsersecurity',
+            // 20200702 harald.bamberger@donau-uni.ac.at backup useexacam setting
+            'useexacam', 
             'delay1', 'delay2', 'showuserpicture', 'showblocks', 'completionattemptsexhausted', 'completionpass',
             'completionminattempts', 'allowofflineattempts'));
 

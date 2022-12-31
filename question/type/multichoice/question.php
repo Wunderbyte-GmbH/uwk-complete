@@ -63,7 +63,44 @@ abstract class qtype_multichoice_base extends question_graded_automatically {
         $this->order = array_keys($this->answers);
         if ($this->shuffleanswers) {
             shuffle($this->order);
+	}
+
+        // added by gtn / Schwed
+        #if ($this instanceof qtype_multichoice_multi_question && isset($GLOBALS['gtn_quizobj'])) { // original by GTN
+        if (($this instanceof qtype_multichoice_multi_question || $this instanceof qtype_multichoice_single_question) && isset($GLOBALS['gtn_quizobj'])) { // mod. by G. Schwed
+            /* @var quiz $quiz */
+            $quiz = $GLOBALS['gtn_quizobj'];
+            $maxAnswerCount = $quiz->get_quiz()->maxanswercount;
+
+            if ($maxAnswerCount >= 2 && count($this->order) > $maxAnswerCount) {
+                $random_answers = $this->order;
+
+                // always check in random order
+                shuffle($random_answers);
+
+                $final_random_answers = [];
+
+                // get first correct answer (so we have at least one correct answer)
+                foreach ($random_answers as $key => $answerid) {
+                    $answer = $this->answers[$answerid];
+
+                    if ($answer->fraction > 0) {
+                        $final_random_answers[] = $answerid;
+                        unset($random_answers[$key]);
+                        break;
+                        }
+                }
+
+                $final_random_answers = array_merge($final_random_answers, array_slice($random_answers, 0, $maxAnswerCount - count($final_random_answers)));
+
+                shuffle($final_random_answers);
+                $this->order = $final_random_answers;
+
+                $step->set_qt_var('_gtn_version', '2017062700');
+            }
         }
+        // [/gtn / Schwed]
+
         $step->set_qt_var('_order', implode(',', $this->order));
     }
 
@@ -86,7 +123,32 @@ abstract class qtype_multichoice_base extends question_graded_automatically {
             $a->feedbackformat = FORMAT_HTML;
             $this->answers[$ansid] = $this->qtype->make_answer($a);
             $this->answers[$ansid]->answerformat = FORMAT_HTML;
+	}
+        // [added by gtn / Schwed]
+        if ($this instanceof qtype_multichoice_multi_question && $step->get_qt_var('_gtn_version') === '2017062700') {
+            $anzahl_richtig = 0;
+            foreach ($this->order as $ansid) {
+                $answer = $this->answers[$ansid];
+
+                if ($answer->fraction > 0) {
+                    $anzahl_richtig++;
+                }
+            }
+
+            // prozentwerte von antworten neu berechnen
+            foreach ($this->order as $ansid) {
+                $answer = $this->answers[$ansid];
+
+                if ($answer->fraction > 0) {
+                    // richtige antworten bekommen 1 / anzahl prozent. z.b. 2 richtige antworten bekommen jeweils 50%
+                    $answer->fraction = 1 / $anzahl_richtig;
+                } else {
+                    // falsche antworten bekommen die gleichen prozent aber als abzug
+                    $answer->fraction = -1 / $anzahl_richtig;
+                }
+            }
         }
+        // [/gtn / Schwed]
     }
 
     public function get_question_summary() {

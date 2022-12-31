@@ -446,6 +446,13 @@ class cron_task extends \core\task\scheduled_task {
                                 unset($poststructure[$courseid][$forumid][$discussionid]);
                                 continue;
                             }
+			    // 20200305 harald.bamberger@donau-uni.ac.at do not send mail if local/duk:sendallgroupforumposts is not allowed begin
+			    // 20210205 adapted for moodle-3.10.1
+                            if ( !has_capability('local/duk:sendallgroupforumposts', $modcontext, $user) ) {
+                                unset($poststructure[$courseid][$forumid][$discussionid]);
+                                continue;
+                            }
+                            // 20200305 harald.bamberger@donau-uni.ac.at do not send mail if local/duk:sendallgroupforumposts is not allowed end
                         }
                     }
 

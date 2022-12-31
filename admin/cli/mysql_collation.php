@@ -138,6 +138,18 @@ if (!empty($options['collation'])) {
     $skipped   = 0;
     $errors    = 0;
     foreach ($rs as $table) {
+        // mod by G. Schwed to skip some tables which cannot be converted
+        #if ($table->name == "mdl_tag") {
+        #    continue; // Schwed, debug
+        #}
+        #if ($table->name == "mdl_user") {
+        #    continue; // Schwed, debug
+        #}
+        if ($table->name == "mdl_wiki_pages") {
+            continue; // Schwed, debug
+        }
+        // End Mod Schwed
+
         echo str_pad($table->name, 40). " - ";
 
         if ($table->collation === $collation) {
@@ -166,6 +178,13 @@ if (!empty($options['collation'])) {
         $sql = "SHOW FULL COLUMNS FROM `$table->name` WHERE collation IS NOT NULL";
         $rs2 = $DB->get_recordset_sql($sql);
         foreach ($rs2 as $column) {
+            #// mod by G. Schwed
+            #print_r($column);
+            #print "Column: $column->field \n";
+            if ($column->field == "username") {
+                continue; // Schwed, debug
+            }
+            #// end mod schwed
             $column = (object)array_change_key_case((array)$column, CASE_LOWER);
             echo '    '.str_pad($column->field, 36). " - ";
             if ($column->collation === $collation) {

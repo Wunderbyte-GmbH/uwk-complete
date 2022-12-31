@@ -150,7 +150,8 @@ class flexible_table {
     /**
      * @var array For storing user-customised table properties in the user_preferences db table.
      */
-    private $prefs = array();
+    //private $prefs = array(); // original
+    protected $prefs = array(); // harald.bamberger@donau-uni.ac.at 20190619
 
     /** @var $sheettitle */
     protected $sheettitle;
@@ -1395,7 +1396,14 @@ class flexible_table {
         }
 
         if ($column = optional_param($this->request[TABLE_VAR_SHOW], '', PARAM_ALPHANUMEXT)) {
-            unset($this->prefs['collapse'][$column]);
+            //unset($this->prefs['collapse'][$column]); // original
+	    // 20210205 harald.bamberger@donau-uni.ac.at make bgroups column hidden by default work again begin
+	    if( $column === 'bgroups' ) {
+                $this->prefs['collapse'][$column] = false;
+	    } else {
+	        unset($this->prefs['collapse'][$column]);
+	    }
+	    // 20210205 harald.bamberger@donau-uni.ac.at make bgroups column hidden by default work again end
         }
 
         foreach (array_keys($this->prefs['collapse']) as $column) {
@@ -1852,7 +1860,11 @@ class flexible_table {
             } else if ($prefname === 'collapse' and !empty($prefval)) {
                 // Check if there are some collapsed columns (all are expanded by default).
                 foreach ($prefval as $columnname => $iscollapsed) {
-                    if ($iscollapsed) {
+                    //if ($iscollapsed) { // original
+// harald.bamberger@donau-uni.ac.at 20200928 begin
+                    if ( ($iscollapsed && $columnname !== 'bgroups') 
+                      || ($columnname === 'bgroups' && !$iscollapsed) ) { 
+// harald.bamberger@donau-uni.ac.at 20200928 end
                         return true;
                     }
                 }

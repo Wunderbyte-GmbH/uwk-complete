@@ -33,4 +33,16 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class forum_post_email extends forum_post {
+    // 20200305 harald.bamberger@donau-uni.ac.at add Groupname to Subject if Post is associated to a group begin
+    public function get_subject() {
+        $subject = parent::get_subject();
+        
+        if( $this->discussion->groupid !== '-1' ) {
+            $groupname = groups_get_group_name($this->discussion->groupid);
+            $subject = '[Grp: ' . $groupname . '] ' . $subject;
+        }
+        
+        return $subject;
+    }
+    // 20200305 harald.bamberger@donau-uni.ac.at add Groupname to Subject if Post is associated to a group end
 }
