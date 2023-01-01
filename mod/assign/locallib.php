@@ -6290,6 +6290,19 @@ class assign {
                     // Do not send self.
                     continue;
                 }
+
+                // added by gerhard.schwed@donau-uni.ac.at
+                // Bugfix to skip users who cannot see the activity (especially non editing teachers)
+                $modinfo = get_fast_modinfo($this->get_course()->id,$potentialuser->id);
+                #print_r($modinfo);
+                $cm = $modinfo->get_cm($this->get_course_module()->id);
+                #print_r($cm);
+                if (!$cm->uservisible) {
+                    //print "TEST!!"; // Schwed debug
+                    continue;
+                }
+                // end gerhard.schwed@donau-uni.ac.at
+
                 // Must be enrolled.
                 if (is_enrolled($this->get_course_context(), $potentialuser->id)) {
                     $notifiableusers[$potentialuser->id] = $potentialuser;
@@ -7460,10 +7473,22 @@ class assign {
             $submission = $this->get_user_submission($userid, true);
         }
 
+	// 20200415 harald.bamberger@donau-uni.ac.at allow siteadmins to save empty submissions begin
+	// original
+	/*
         if ($this->new_submission_empty($data)) {
             $notices[] = get_string('submissionempty', 'mod_assign');
             return false;
         }
+	*/
+
+	if( !(is_siteadmin() && $submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT) ) {
+            if ($this->new_submission_empty($data)) {
+                $notices[] = get_string('submissionempty', 'mod_assign');
+                return false;
+            }
+	}
+	// 20200415 harald.bamberger@donau-uni.ac.at allow siteadmins to save empty submissions end
 
         // Check that no one has modified the submission since we started looking at it.
         if (isset($data->lastmodified) && ($submission->timemodified > $data->lastmodified)) {
@@ -7500,6 +7525,11 @@ class assign {
         }
 
         $allempty = $this->submission_empty($submission);
+	// 20200415 harald.bamberger@donau-uni.ac.at allow siteadmins to save empty submissions begin
+	if( $allempty && is_siteadmin() && $submission->status == ASSIGN_SUBMISSION_STATUS_DRAFT ) {
+	  $allempty = false;
+	}
+	// 20200415 harald.bamberger@donau-uni.ac.at allow siteadmins to save empty submissions end
         if ($pluginerror || $allempty) {
             if ($allempty) {
                 $notices[] = get_string('submissionempty', 'mod_assign');

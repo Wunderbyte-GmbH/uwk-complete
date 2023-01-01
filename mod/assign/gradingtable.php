@@ -65,6 +65,10 @@ class assign_grading_table extends table_sql implements renderable {
     /** @var array $scale - A list of the keys and descriptions for the custom scale */
     private $scale = null;
 
+    // harald.bamberger@donau-uni.ac.at 20190619 begin
+    private $extra_userfields = array();
+    // harald.bamberger@donau-uni.ac.at 20190619 end
+    
     /**
      * overridden constructor keeps a reference to the assignment class that is displaying this table
      *
@@ -149,6 +153,12 @@ class assign_grading_table extends table_sql implements renderable {
         $fields .= 'g.grade as grade, ';
         $fields .= 'g.timemodified as timemarked, ';
         $fields .= 'g.timecreated as firstmarked, ';
+        // harald.bamberger@donau-uni.ac.at 20190619 begin
+        $fields .= user_picture::fields('gr', $extrauserfields, 'grader_id', 'grader_') . ', ';
+        // harald.bamberger@donau-uni.ac.at 20190619 end
+        // harald.bamberger@donau-uni.ac.at 20200928 begin
+        $fields .= 'bgs.bgroups AS bgroups, ';
+        // harald.bamberger@donau-uni.ac.at 20200928 end
         $fields .= 'uf.mailed as mailed, ';
         $fields .= 'uf.locked as locked, ';
         $fields .= 'uf.extensionduedate as extensionduedate, ';
@@ -167,6 +177,21 @@ class assign_grading_table extends table_sql implements renderable {
                            AND u.id = g.userid
                            AND (g.attemptnumber = s.attemptnumber OR s.attemptnumber IS NULL) ';
 
+        // harald.bamberger@donau-uni.ac.at 20200928 begin
+        $from .= ' LEFT JOIN (
+                     SELECT bgm.userid, GROUP_CONCAT(bg.name) AS bgroups 
+                     FROM {groups} bg 
+                     JOIN {groups_members} bgm 
+                       ON bgm.groupid = bg.id AND bg.courseid = :bhcourseid 
+                     GROUP BY bgm.userid ) bgs 
+                   ON u.id = bgs.userid ';
+        $params['bhcourseid'] = (int)$this->assignment->get_course()->id;
+        // harald.bamberger@donau-uni.ac.at 20200928 end
+        
+        // harald.bamberger@donau-uni.ac.at 20190619 begin
+        $from .= ' LEFT JOIN {user} gr ON gr.id = g.grader ';
+        // harald.bamberger@donau-uni.ac.at 20190619 end
+        
         $from .= 'LEFT JOIN {assign_user_flags} uf
                          ON u.id = uf.userid
                         AND uf.assignment = :assignmentid3 ';
@@ -384,6 +409,26 @@ class assign_grading_table extends table_sql implements renderable {
                     <input type="checkbox" id="selectall" name="selectall" title="' . get_string('selectall') . '"/></div>';
         }
 
+// harald.bamberger@donau-uni.ac.at 20190619 begin
+
+        if ($this->hasviewblind || !$this->assignment->is_blind_marking()) {
+            if ( $this->is_downloading() 
+             || ($this->assignment->is_blind_marking() && !$this->is_downloading()) ) {
+                $columns[] = 'recordid';
+                $headers[] = get_string('recordid', 'assign');
+            }
+            $columns[] = 'fullname';
+            $headers[] = get_string('fullname');
+            
+            $this->extra_userfields = $extrauserfields;
+        } else {
+            // Record ID.
+            $columns[] = 'recordid';
+            $headers[] = get_string('recordid', 'assign');            
+        }
+
+/*
+// original
         // User picture.
         if ($this->hasviewblind || !$this->assignment->is_blind_marking()) {
             if (!$this->is_downloading()) {
@@ -415,6 +460,14 @@ class assign_grading_table extends table_sql implements renderable {
             $columns[] = 'recordid';
             $headers[] = get_string('recordid', 'assign');
         }
+*/
+// harald.bamberger@donau-uni.ac.at 20190619 end
+
+// harald.bamberger@donau-uni.ac.at 20200928 begin
+        $columns[] = 'bgroups';
+        $headers[] = get_string('bgroups', 'local_duk');
+// harald.bamberger@donau-uni.ac.at 20200928 end
+
 
         // Submission status.
         $columns[] = 'status';
@@ -506,6 +559,13 @@ class assign_grading_table extends table_sql implements renderable {
         $columns[] = 'timemarked';
         $headers[] = get_string('lastmodifiedgrade', 'assign');
 
+        // harald.bamberger@donau-uni.ac.at 20190619 begin
+        // last grader
+        $columns[] = 'lastgrader';
+        $headers[] = get_string('gradedby', 'assign');
+        $this->no_sorting('lastgrader');
+        // harald.bamberger@donau-uni.ac.at 20190619 end
+        
         // Feedback plugins.
         foreach ($this->assignment->get_feedback_plugins() as $plugin) {
             if ($this->is_downloading()) {
@@ -574,6 +634,10 @@ class assign_grading_table extends table_sql implements renderable {
             }
         }
 
+// harald.bamberger@donau-uni.ac.at 20200928 begin
+        $this->no_sorting('bgroups');
+// harald.bamberger@donau-uni.ac.at 20200928 end
+        
         // When there is no data we still want the column headers printed in the csv file.
         if ($this->is_downloading()) {
             $this->start_output();
@@ -886,7 +950,9 @@ class assign_grading_table extends table_sql implements renderable {
      * @param stdClass $row
      * @return string
      */
-    public function col_fullname($row) {
+    // harald.bamberger@donau-uni.ac.at 20190619
+    //public function col_fullname($row) { //original
+    protected function _col_fullname($row) {
         if (!$this->is_downloading()) {
             $courseid = $this->assignment->get_course()->id;
             $link = new moodle_url('/user/view.php', array('id' => $row->id, 'course' => $courseid));
@@ -903,6 +969,110 @@ class assign_grading_table extends table_sql implements renderable {
         return $fullname;
     }
 
+// harald.bamberger@donau-uni.ac.at 20190619 begin    
+    /**
+     * Format a user details for display
+     *
+     * @param stdClass $row
+     * @return string
+     */
+    public function col_fullname($row) {
+        $details = '';        
+        if( !$this->is_downloading() ) {
+            $details .= $this->col_picture($row);
+        }
+        $details .= $this->_col_fullname($row);
+        
+        foreach ($this->extra_userfields as $extrafield) {
+            $details .= '<p>' . $this->other_cols($extrafield, $row) . '</p>';
+        }
+        
+        //$details .= '<pre>' . print_r($row, true) . '</pre>';
+        
+        return $details;
+    }
+
+    /**
+     * Format a user details for display
+     *
+     * @param stdClass $row
+     * @return string
+     */
+    public function col_lastgrader($row) {
+        $details = '-';
+        
+        if( empty($row->grader_id) ) {
+            return $details;
+        }
+        
+        $details = '';
+        $tmprow  = new stdClass();
+        $tmparr  = get_object_vars($row);
+        foreach($tmparr as $key => $value ) {
+            $pattern = '/grader_/';
+            if(preg_match($pattern, $key) ) {
+                $nkey = preg_replace($pattern, '', $key);
+                $tmprow->{$nkey} = $value;
+            }
+        }
+        $tmprow->userid     = $row->grader_id;
+                        
+        if( !$this->is_downloading() ) {
+            $details .= (!empty($tmprow->id)) ? $this->col_picture($tmprow) : '';
+        }
+        $details .= $this->_col_fullname($tmprow);
+        $details .= '<p>' . $tmprow->email . '</p>';
+        //$details .= '<pre>' . print_r($tmprow, true) . '</pre>';
+        
+        return $details;
+    }
+    
+    /**
+     * @return string sql to add to where statement.
+     */
+    function get_sql_where() {
+        global $DB;
+
+        $conditions = array();
+        $params = array();
+
+        if (isset($this->columns['fullname'])) {
+            static $i = 0;
+            $i++;
+
+            if (!empty($this->prefs['i_first'])) {
+                $conditions[] = $DB->sql_like('u.firstname', ':ifirstc'.$i, false, false);
+                $params['ifirstc'.$i] = $this->prefs['i_first'].'%';
+            }
+            if (!empty($this->prefs['i_last'])) {
+                $conditions[] = $DB->sql_like('u.lastname', ':ilastc'.$i, false, false);
+                $params['ilastc'.$i] = $this->prefs['i_last'].'%';
+            }
+        }
+
+        return array(implode(" AND ", $conditions), $params);
+    }
+// harald.bamberger@donau-uni.ac.at 20190619 end
+    
+// 20200928 harald.bamberger@donau-uni.ac.at begin
+    /**
+     * Format a user details for display
+     *
+     * @param stdClass $row
+     * @return string
+     */
+    public function col_bgroups($row) {
+        $details = '-';
+        
+        if( empty($row->bgroups) ) {
+            return $details;
+        }
+        
+        $details = $row->bgroups;        
+        return $details;
+    }
+// 20200928 harald.bamberger@donau-uni.ac.at end
+    
     /**
      * Insert a checkbox for selecting the current row for batch operations.
      *
@@ -1676,5 +1846,11 @@ class assign_grading_table extends table_sql implements renderable {
             return;
         }
         parent::setup();
+        
+// harald.bamberger@donau-uni.ac.at 20200928 begin 
+        if( !isset($this->prefs['collapse']['bgroups']) ) {
+            $this->prefs['collapse']['bgroups'] = true;
+        }
+// harald.bamberger@donau-uni.ac.at 20200928 end
     }
 }
