@@ -154,7 +154,7 @@ class assign_grading_table extends table_sql implements renderable {
         $fields .= 'g.timemodified as timemarked, ';
         $fields .= 'g.timecreated as firstmarked, ';
         // harald.bamberger@donau-uni.ac.at 20190619 begin
-        $fields .= user_picture::fields('gr', $extrauserfields, 'grader_id', 'grader_') . ', ';
+        $fields .= $userfieldsapi->get_sql('gr', false, 'grader_', 'grader_id', false)->selects . ', ';
         // harald.bamberger@donau-uni.ac.at 20190619 end
         // harald.bamberger@donau-uni.ac.at 20200928 begin
         $fields .= 'bgs.bgroups AS bgroups, ';
