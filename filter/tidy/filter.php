@@ -47,7 +47,7 @@ class filter_tidy extends moodle_text_filter {
                  'show-body-only' => true,
                  'tidy-mark' => false,
                  'drop-proprietary-attributes' => true,
-                 'clean' => true,
+                 'clean' => false, // harald.bamberger@bh-se.com 20230117 to preserve inline style attributes e.g. video iframe sizes
                  'drop-empty-paras' => true,
                  'indent' => true,
                  'quiet' => true,
