@@ -315,13 +315,11 @@ M.mod_quiz.secure_window = {
 
     init_close_button: function(Y, url) {
         Y.on('click', function(e) {
-            //M.mod_quiz.secure_window.close(url, 0) //original
-            // 20200518 harald.bamberger@donau-uni.ac.at fix link to /mod/quiz/0 after test attempt
-            M.mod_quiz.secure_window.close(Y, url, 0)
+            M.mod_quiz.secure_window.close(url, 0)
         }, '#secureclosebutton');
     },
 
-    close: function(url, delay) {
+    close: function(Y, url, delay) {
         setTimeout(function() {
             if (window.opener) {
                 window.opener.document.location.reload();

@@ -272,7 +272,7 @@ class tgz_extractor {
         //    char uid[8];
         //    char gid[8];
         //    char size[12];
-        $filesize = octdec(substr($block, 124, 11));
+        $filesize = octdec(rtrim(substr($block, 124, 12), "\0"));
 
         //    char mtime[12];
         $mtime = octdec(substr($block, 136, 11));

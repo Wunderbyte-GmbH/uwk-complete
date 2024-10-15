@@ -383,13 +383,19 @@ class tgz_packer extends file_packer {
 
         //    char size[12];
         $octalsize = decoct($size);
-        if (strlen($octalsize) > 11) {
-            throw new coding_exception(
-                    'File too large for .tar file: ' . $archivepath . ' (' . $size . ' bytes)');
+        if (strlen($octalsize) === 12) {
+            $paddedsize = $octalsize;
+            $forchecksum .= $paddedsize;
+            $header .= $paddedsize;
+        } else {
+            if (strlen($octalsize) > 11) {
+                throw new coding_exception(
+                        'File too large for .tar file: ' . $archivepath . ' (' . $size . ' bytes)');
+            }
+            $paddedsize = str_pad($octalsize, 11, '0', STR_PAD_LEFT);
+            $forchecksum .= $paddedsize;
+            $header .= $paddedsize . "\x00";
         }
-        $paddedsize = str_pad($octalsize, 11, '0', STR_PAD_LEFT);
-        $forchecksum .= $paddedsize;
-        $header .= $paddedsize . "\x00";
 
         //    char mtime[12];
         if ($mtime === '?') {
