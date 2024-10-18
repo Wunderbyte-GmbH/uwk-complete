@@ -179,6 +179,19 @@ class mod_quiz_mod_form extends moodleform_mod {
                 get_string('howquestionsbehave', 'question'), $behaviours);
         $mform->addHelpButton('preferredbehaviour', 'howquestionsbehave', 'question');
 
+        // Modify random question behavior.
+        // Assuming new xmldb_field('maxanswercount', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        // is already added to the quiz table.
+        $options = [
+                0 => 'kein Limit',
+                2 => '2 Antworten',
+                3 => '3 Antworten',
+                4 => '4 Antworten',
+                5 => '5 Antworten',
+                6 => '6 Antworten',
+        ];
+        $mform->addElement('select', 'maxanswercount',
+                'Maximal Anzahl von Antworten bei MC-Fragen', $options);
         // Can redo completed questions.
         $redochoices = array(0 => get_string('no'), 1 => get_string('canredoquestionsyes', 'quiz'));
         $mform->addElement('select', 'canredoquestions', get_string('canredoquestions', 'quiz'), $redochoices);
@@ -259,6 +272,10 @@ class mod_quiz_mod_form extends moodleform_mod {
 
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'security', get_string('extraattemptrestrictions', 'quiz'));
+
+        // Modification added by G. Schwed (DUK) to enable 'exacam' proctoring with webcam.
+        $mform->addElement('selectyesno', 'useexacam', 'Überwachung mittels Webcam aktivieren');
+        $mform->setDefault('useexacam', @$quizconfig->useexacam);
 
         // Require password to begin quiz attempt.
         $mform->addElement('passwordunmask', 'quizpassword', get_string('requirepassword', 'quiz'));

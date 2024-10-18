@@ -43,8 +43,8 @@ M.mod_quiz.init_comment_popup = function(Y) {
     var closebutton = Y.Node.create('<input type="button" class="btn btn-secondary" />');
     closebutton.set('value', M.util.get_string('cancel', 'moodle'));
     Y.one('#id_submitbutton').ancestor().append(closebutton);
-    Y.on('click', function() { window.close() }, closebutton);
-}
+    Y.on('click', function() { window.close(); }, closebutton);
+};
 
 // Code for updating the countdown timer that is used on timed quizzes.
 M.mod_quiz.timer = {
@@ -328,7 +328,7 @@ M.mod_quiz.secure_window = {
 
     init_close_button: function(Y, url) {
         Y.on('click', function(e) {
-            M.mod_quiz.secure_window.close(url, 0)
+            M.mod_quiz.secure_window.close(url, 0);
         }, '#secureclosebutton');
     },
 
