@@ -41,7 +41,7 @@ class qtype_description extends question_type {
     }
 
     public function is_usable_by_random() {
-        return false;
+        return true;
     }
 
     public function can_analyse_responses() {

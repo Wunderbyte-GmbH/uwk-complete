@@ -278,10 +278,16 @@ class qtype_multichoice_single_renderer extends qtype_multichoice_renderer_base 
 
     public function correct_response(question_attempt $qa) {
         $question = $qa->get_question();
+        $order = $question->get_order($qa); // added by GTN / Schwed, 2017-08-03
 
         // Put all correct answers (100% grade) into $right.
         $right = array();
         foreach ($question->answers as $ansid => $ans) {
+            // added by GTN / Schwed, 2017-08-03
+            if (!in_array($ansid, $order)) {
+                // also check if answer is in random selected answers
+                continue;
+            }
             if (question_state::graded_state_for_fraction($ans->fraction) ==
                     question_state::$gradedright) {
                 $right[] = $question->make_html_inline($question->format_text($ans->answer, $ans->answerformat,
