@@ -50,6 +50,7 @@ class filter_tidy extends moodle_text_filter {
                  'drop-empty-paras' => true,
                  'indent' => true,
                  'quiet' => true,
+                 'wrap' => 0,
         );
 
     /// Do a quick check using strpos to avoid unnecessary work
