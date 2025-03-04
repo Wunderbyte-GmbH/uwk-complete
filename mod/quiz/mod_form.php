@@ -273,10 +273,6 @@ class mod_quiz_mod_form extends moodleform_mod {
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'security', get_string('extraattemptrestrictions', 'quiz'));
 
-        // Modification added by G. Schwed (DUK) to enable 'exacam' proctoring with webcam.
-        $mform->addElement('selectyesno', 'useexacam', 'Überwachung mittels Webcam aktivieren');
-        $mform->setDefault('useexacam', @$quizconfig->useexacam);
-
         // Require password to begin quiz attempt.
         $mform->addElement('passwordunmask', 'quizpassword', get_string('requirepassword', 'quiz'));
         $mform->setType('quizpassword', PARAM_TEXT);
