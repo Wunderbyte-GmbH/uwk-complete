@@ -198,6 +198,7 @@ class grade extends tablelike implements selectable_items, filterable_items {
         return [
             get_string('fullnameuser', 'core'),
             '', // For filter icon.
+            get_string('gradedby', 'assign')
             get_string('gradenoun'),
             get_string('range', 'grades'),
             get_string('feedback', 'grades'),
@@ -246,10 +247,16 @@ class grade extends tablelike implements selectable_items, filterable_items {
 
         $formatteddefinition = $this->format_definition($grade);
 
+        $gradername = '';
+        if (!empty($grade->usermodified)) {
+            $gradername = $grade->usermodified ? fullname($DB->get_record('user', ['id' => $grade->usermodified])) : '-';
+        }
+
         $line = [
             html_writer::link($url, $userpic . $fullname),
             $this->get_user_action_menu($item),
             $formatteddefinition['finalgrade'] . $gradestatus,
+            $gradername,
             $this->item_range(),
             $formatteddefinition['feedback'],
             $formatteddefinition['override'],
