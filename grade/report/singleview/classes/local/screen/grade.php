@@ -176,6 +176,7 @@ class grade extends tablelike implements selectable_items, filterable_items {
             get_string('fullnameuser', 'core'),
             '', // For filter icon.
             get_string('grade', 'grades'),
+            get_string('gradedby', 'assign'),
             get_string('range', 'grades'),
             get_string('feedback', 'grades'),
             get_string('override', 'gradereport_singleview'),
@@ -190,7 +191,7 @@ class grade extends tablelike implements selectable_items, filterable_items {
      * @return array
      */
     public function format_line($item): array {
-        global $OUTPUT;
+        global $OUTPUT, $DB;
 
         $grade = $this->fetch_grade_or_default($this->item, $item->id);
 
@@ -221,10 +222,16 @@ class grade extends tablelike implements selectable_items, filterable_items {
 
         $formatteddefinition = $this->format_definition($grade);
 
+        $gradername = '';
+        if (!empty($grade->usermodified)) {
+            $gradername = $grade->usermodified ? fullname($DB->get_record('user', ['id' => $grade->usermodified])) : '-';
+        }
+
         $line = [
             html_writer::link($url, $userpic . $fullname),
             $this->get_user_action_menu($item),
             $formatteddefinition['finalgrade'],
+            $gradername,
             $this->item_range(),
             $formatteddefinition['feedback'],
             $formatteddefinition['override'],
