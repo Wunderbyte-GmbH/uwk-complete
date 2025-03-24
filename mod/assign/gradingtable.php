@@ -506,6 +506,10 @@ class assign_grading_table extends table_sql implements renderable {
         $columns[] = 'timemarked';
         $headers[] = get_string('lastmodifiedgrade', 'assign');
 
+        // Name of grader.
+        $columns[] = 'grader';
+        $headers[] = get_string('gradedby', 'assign');
+
         // Feedback plugins.
         foreach ($this->assignment->get_feedback_plugins() as $plugin) {
             if ($this->is_downloading()) {
@@ -1045,6 +1049,27 @@ class assign_grading_table extends table_sql implements renderable {
         }
 
         return $o;
+    }
+
+    /**
+     * Format a column of data for display.
+     *
+     * @param stdClass $row
+     * @return string
+     */
+    public function col_grader(stdClass $row) {
+        global $DB, $OUTPUT;
+
+        // Check if usermodified exists (stores the grader's user ID).
+        if (!empty($row->gradeid)) {
+            $graderid = $DB->get_field('assign_grades', 'grader', ['id' => $row->gradeid]);
+            $grader = $DB->get_record('user', ['id' => $graderid]);
+            if ($grader) {
+                // Return grader name with user profile link.
+                return $OUTPUT->user_picture($grader, ['size' => 24]) . ' ' . fullname($grader);
+            }
+        }
+        return '-';
     }
 
     /**
