@@ -14,30 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * @package    block_quickmail
- * @copyright  2008 onwards Louisiana State University
- * @copyright  2008 onwards Chad Mazilly, Robert Russo, Jason Peak, Dave Elliott, Adam Zapletal, Philip Cali
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace block_quickmail;
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(__FILE__) . '/traits/unit_testcase_traits.php');
 
 use block_quickmail\messenger\messenger;
-use block_quickmail\persistents\message;
 use block_quickmail\persistents\signature;
 use block_quickmail\exceptions\validation_exception;
 
-class block_quickmail_messenger_compose_testcase extends advanced_testcase {
+/**
+ * @package    block_quickmail
+ * @copyright  2008 onwards Louisiana State University
+ * @copyright  2008 onwards Chad Mazilly, Robert Russo, Jason Peak, Dave Elliott, Adam Zapletal, Philip Cali
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class messenger_compose_test extends \advanced_testcase {
 
-    use has_general_helpers,
-        sets_up_courses,
-        submits_compose_message_form,
-        sends_emails,
-        sends_messages,
-        assigns_mentors;
+    use \has_general_helpers,
+        \sets_up_courses,
+        \submits_compose_message_form,
+        \sends_emails,
+        \sends_messages,
+        \assigns_mentors;
 
     public function test_messenger_sends_composed_email_now() {
         $this->resetAfterTest(true);
@@ -57,6 +57,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(4, $this->email_sink_email_count($sink));
@@ -89,6 +90,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         // Should have been sent to 4 users + 1 mentor.
@@ -117,6 +119,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(0, $this->email_sink_email_count($sink));
@@ -140,6 +143,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         $composeformdata = $this->get_compose_message_form_submission($recipients, 'message', []);
 
         // Send a moodle message from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(4, $this->message_sink_message_count($sink));
@@ -165,6 +169,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(1, $this->email_sink_email_count($sink));
@@ -193,6 +198,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Schedule an email from the teacher to the students (as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata);
 
         \phpunit_util::run_all_adhoc_tasks();
@@ -221,13 +227,16 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(7, $this->email_sink_email_count($sink));
         $this->assertEquals('Hello world', $this->email_in_sink_attr($sink, 7, 'subject'));
         $this->assertTrue($this->email_in_sink_body_contains($sink, 7, 'This is one fine body.'));
         $this->assertEquals(get_config('moodle', 'noreplyaddress'), $this->email_in_sink_attr($sink, 7, 'from'));
-        $this->assertEquals('additional@three.com', $this->email_in_sink_attr($sink, 7, 'to'));
+        $this->assertContains('additional@one.com', $this->email_in_sink_attr_all($sink, 'to'));
+        $this->assertContains('additional@two.com', $this->email_in_sink_attr_all($sink, 'to'));
+        $this->assertContains('additional@three.com', $this->email_in_sink_attr_all($sink, 'to'));
 
         $this->close_email_sink($sink);
     }
@@ -255,10 +264,11 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertEquals(5, $this->email_sink_email_count($sink));
-        $this->assertEquals(block_quickmail_string::get('send_receipt_subject_addendage') . ': Hello world',
+        $this->assertEquals(\block_quickmail_string::get('send_receipt_subject_addendage') . ': Hello world',
             $this->email_in_sink_attr($sink, 5, 'subject'));
         $this->assertTrue($this->email_in_sink_body_contains(
             $sink, 5, 'This is one fine body.'));
@@ -295,6 +305,7 @@ class block_quickmail_messenger_compose_testcase extends advanced_testcase {
         ]);
 
         // Send an email from the teacher to the students now (not as queued adhoc tasks).
+        $this->setUser($userteacher);
         messenger::compose($userteacher, $course, $composeformdata, null, false);
 
         $this->assertTrue($this->email_in_sink_body_contains($sink, 1, 'This is one fine body.'));
