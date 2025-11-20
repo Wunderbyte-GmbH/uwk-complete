@@ -1,0 +1,21 @@
+.project
+.settings
+/nbproject/private/
+project.xml
+project.properties
+.DS_Store
+._*
+.idea
+amd/Gruntfile.js
+amd/package.json
+amd/package-lock.json
+amd/node_modules
+vue3/node_modules
+.vscode/launch.json
+
+# Ignore everything in bookingextension subfolders
+bookingextension/*/
+
+# Do not ignore confirmation_trainer
+!bookingextension/confirmation_trainer/
+!bookingextension/confirmation_trainer/**  # Unignore contents too

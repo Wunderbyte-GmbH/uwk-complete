@@ -1,0 +1,19 @@
+<?php if(! isset($CFG->block_mycourses_chars)) {
+$CFG->block_mycourses_chars = 35;
+}?>
+<table cellpadding="9" cellspacing="0">
+<tr valign="top">
+    <td align="right">block_mycourses_chars:</td>
+    <td>
+    <input name="block" type="hidden" value="<?php echo intval($_REQUEST['block']); ?>" />
+    <input name="block_mycourses_chars" size="2" type="text" value="<?php echo $CFG->block_mycourses_chars;?>" />
+    </td>
+    <td>
+    <?php print_string("configchars", "block_mycourses") ?>
+    </td>
+</tr>
+<tr>
+    <td colspan="3" align="center">
+    <input type="submit" value="<?php print_string("savechanges") ?>" /></td>
+</tr>
+</table>

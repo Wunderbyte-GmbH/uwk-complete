@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="18" viewBox="0 0 16 18">
+  <defs>
+    <clipPath id="clip-Embed_question">
+      <rect width="16" height="18"/>
+    </clipPath>
+  </defs>
+  <g id="Embed_question" data-name="Embed question" clip-path="url(#clip-Embed_question)">
+    <rect width="16" height="18" fill="#fff"/>
+    <g id="Group_404" data-name="Group 404" transform="translate(-10377 926)">
+      <rect id="Rectangle_228" data-name="Rectangle 228" width="16" height="18" transform="translate(10377 -926)" fill="#fff"/>
+      <g id="Group_387" data-name="Group 387" transform="translate(10377 -925)">
+        <rect id="Rectangle_227" data-name="Rectangle 227" width="2.9" height="2.9" transform="translate(2.4 6.2)"/>
+        <g id="Group_382" data-name="Group 382">
+          <path id="Path_473" data-name="Path 473" d="M14.3,3.5h-6a.773.773,0,0,1-.7-.8c0-.3.3-.8.7-.8h6a.773.773,0,0,1,.7.8C15,2.9,14.7,3.5,14.3,3.5Z"/>
+        </g>
+        <g id="Group_383" data-name="Group 383">
+          <path id="Path_474" data-name="Path 474" d="M14.3,9.1h-6a.773.773,0,0,1-.7-.8c0-.3.3-.8.7-.8h6a.807.807,0,0,1,0,1.6Z"/>
+        </g>
+        <g id="Group_384" data-name="Group 384">
+          <path id="Path_475" data-name="Path 475" d="M7.2.8,6.2,0l-3,2.9L1.8,1.4,1,2.4,3.2,4.6h.2Z"/>
+        </g>
+        <g id="Group_385" data-name="Group 385">
+          <path id="Path_476" data-name="Path 476" d="M14.3,14.7h-6a.773.773,0,0,1-.7-.8c0-.3.3-.8.7-.8h6a.807.807,0,0,1,0,1.6Z"/>
+        </g>
+        <g id="Group_386" data-name="Group 386">
+          <path id="Path_477" data-name="Path 477" d="M7.2,12.1l-1-.9-3,3L1.8,12.8l-.8.8L3.2,16h.2Z"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
