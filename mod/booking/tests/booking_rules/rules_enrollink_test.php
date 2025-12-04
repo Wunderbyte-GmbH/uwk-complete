@@ -65,13 +65,9 @@ final class rules_enrollink_test extends advanced_testcase {
      */
     public function tearDown(): void {
         parent::tearDown();
-        // Mandatory clean-up.
-        singleton_service::destroy_instance();
-        enrollink::destroy_instances();
-        // Mandatory to deal with static variable in the booking_rules.
-        rules_info::destroy_singletons();
-        booking_rules::$rules = [];
-        cartstore::reset();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
     }
 
     /**
@@ -516,6 +512,9 @@ final class rules_enrollink_test extends advanced_testcase {
         $price = price::get_price('option', $settings->id);
         $this->assertEquals(75, $price["price"]);
 
+        // Trigger the booking 3 times to simulate submitting the form, including the confirmation of waitinglist.
+        $result = booking_bookit::bookit('option', $settings->id, $teacher1->id);
+        $result = booking_bookit::bookit('option', $settings->id, $teacher1->id);
         $result = booking_bookit::bookit('option', $settings->id, $teacher1->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $teacher1->id);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);

@@ -81,6 +81,12 @@ abstract class base {
     public $expectedvalue;
 
     /**
+     * Set it to true if this filter should bypass the cache.
+     * @var bool bypasscache
+     */
+    protected $bypasscache = false;
+
+    /**
      * Set the column which should be filtered and possibly localize it.
      * @param string $columnidentifier
      * @param string $localizedstring
@@ -156,6 +162,7 @@ abstract class base {
 
         $options['localizedname'] = $this->localizedstring;
         $options['wbfilterclass'] = get_called_class();
+        $options['wbbypasscache'] = $this->if_bypass_cache();
         $options[$this->columnidentifier . '_wb_checked'] = $invisible ? 0 : 1;
 
         // We always need to make sure that id column is present.
@@ -544,5 +551,29 @@ abstract class base {
             $filterenablelabel => $data->$filterenablelabel ?? '0',
         ];
         return [$filterspecificvalues, ''];
+    }
+
+    /**
+     * Enables cache bypass for this query instance.
+     *
+     * Sets the internal `$bypasscache` flag to true, indicating that subsequent
+     * query executions should skip any caching mechanisms.
+     *
+     * @return void
+     */
+    public function bypass_cache(): void {
+        $this->bypasscache = true;
+    }
+
+    /**
+     * Checks whether the cache should be bypassed.
+     *
+     * This method returns the current state of the internal flag that determines
+     * whether caching should be skipped for this instance.
+     *
+     * @return bool True if the cache should be bypassed, false otherwise.
+     */
+    public function if_bypass_cache(): bool {
+        return $this->bypasscache;
     }
 }

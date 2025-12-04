@@ -82,6 +82,23 @@ class customfieldfilter extends base {
     protected bool $iscustomsql = false;
 
     /**
+     * By default we count keys, but if false we return the options with no count.
+     *
+     * You need to call add_options() and pass your own options when you set this property to false.
+     *
+     * @var bool
+     */
+    protected bool $countkeys = true;
+
+    /**
+     * By default, this filter uses the ILIKE operator to filter results in the WHERE condition.
+     * However, you can use the '=' operator instead. To use the '=' operator, you must call `use_operator_equal()`.
+     *
+     * @var string Can be 'ilike' or '='.
+     */
+    protected string $inuseoperator = 'ilike';
+
+    /**
      * Applies the filter to a wunderbyte_table instance using either a custom SQL
      * subquery or a default one based on field ID.
      *
@@ -106,7 +123,7 @@ class customfieldfilter extends base {
             // However, the user must provide a custom field ID.
             if (empty($this->fieldid)) {
                 throw new moodle_exception(
-                    'missing_subquery_and_fieldid',
+                    'missingsubqueryandfieldid',
                     'local_wunderbyte_table',
                     '',
                     null,
@@ -125,6 +142,37 @@ class customfieldfilter extends base {
             $this->subquerycolumn = 'cfd.value';
         }
 
+        switch ($this->inuseoperator) {
+            case '=':
+                $generatedwhere = $this->generate_where_condition_using_equal($filter, $columnname, $categoryvalue, $table);
+                break;
+            case 'ilike':
+            default:
+                $generatedwhere = $this->generate_where_condition_using_ilike($filter, $columnname, $categoryvalue, $table);
+                break;
+        }
+
+        // Replaces placeholder with double dots (:) with the generated where condition.
+        $filter .= $this->adjust_sql_condition($generatedwhere);
+    }
+
+    /**
+     * Generated where condition using ILKE operator to filter out the results.
+     *
+     * @param string $filter
+     * @param string $columnname
+     * @param mixed $categoryvalue
+     * @param wunderbyte_table $table
+     * @return string
+     *
+     */
+    protected function generate_where_condition_using_ilike(
+        string &$filter,
+        string $columnname,
+        $categoryvalue,
+        wunderbyte_table &$table
+    ): string {
+        global $DB;
         $filtercounter = 1;
         $generatedwhere = '(';
         foreach ($categoryvalue as $key => $value) {
@@ -147,8 +195,37 @@ class customfieldfilter extends base {
         }
         $generatedwhere .= ')';
 
-        // Replaces placeholder with double dots (:) with the generated where condition.
-        $filter .= $this->adjust_sql_condition($generatedwhere);
+        return $generatedwhere;
+    }
+
+    /**
+     * Generated where condition using '=' operator to filter out the results.
+     *
+     * @param string $filter
+     * @param string $columnname
+     * @param mixed $categoryvalue
+     * @param wunderbyte_table $table
+     * @return string
+     *
+     */
+    protected function generate_where_condition_using_equal(
+        string &$filter,
+        string $columnname,
+        $categoryvalue,
+        wunderbyte_table &$table
+    ): string {
+        global $DB;
+        $filtercounter = 1;
+        $generatedwhere = '(';
+        foreach ($categoryvalue as $key => $value) {
+            $generatedwhere .= $filtercounter == 1 ? "" : " OR ";
+            $paramsvaluekey = $table->set_params($value, true);
+            $generatedwhere .= $this->subquerycolumn . '=' . ":$paramsvaluekey";
+            $filtercounter++;
+        }
+        $generatedwhere .= ')';
+
+        return $generatedwhere;
     }
 
     /**
@@ -183,7 +260,7 @@ class customfieldfilter extends base {
     }
 
     /**
-     * Sets $filedid.
+     * Sets $fieldid.
      * @param int $fieldid
      * @return void
      */
@@ -270,39 +347,143 @@ class customfieldfilter extends base {
         /** @var customfieldfilter $filter */
         $filter = $table->filters[$key];
         $customfieldid = $filter->fieldid ?? null;
-        $iscutomsql = $filter->iscustomsql ?? false;
+        $iscustomsql = $filter->iscustomsql ?? false;
 
-        // If $iscutomsql is set,
-        // so we look inside the query to count the number of records for each value of the given key.
-        if ($iscutomsql) {
-            return filter::get_db_filter_column($table, $key);
+        // If we dont need count key, we don't run the query to count it but we need the options.
+        // So we create it manulally based on the options we passed to the filter.
+        if (!$filter->countkeys) {
+            $records = [];
+            foreach ($filter->options as $k => $v) {
+                $option[$key] = $k;
+                $option['keycount'] = false;
+                $records[$k] = (object) $option;
+            }
+            return $records;
         }
 
-        // The $key param is the name of the table in the column, so we can safely use it directly without fear of injection.
-        // As this filter is made specifically for custom fields,
-        // we count the number of records for each value of the given $key in the custom field data table.
+        // If $iscustomsql is set,
+        // so we look inside the query to count the number of records for each value of the given key.
+        if ($iscustomsql) {
+            $records = filter::get_db_filter_column($table, $key);
+        } else {
+            // It is not possbile to count the number of records with get_db_filter_column function
+            // as it needs the column to be included in the selected fields and we have not this custom
+            // filed inside the selected fields when it is not a custom field.
+            // The $key param is the name of the column in the table, so we can safely use it directly without fear of injection.
+            // As this filter is made specifically for custom fields, we count the number of records for each value of
+            // the given $key in the custom field data table.
+            $records = self::get_db_filter_column_for_custom_field($table, $key);
+        }
+
+        return $records;
+    }
+
+    /**
+     * Returns the data for the filter if it is a custom field.
+     *
+     * It is not possbile to count the number of records with get_db_filter_column function
+     * as it needs the column to be included in the selected fields and we have not this custom filed inside the selected fields
+     * when it is not a custom field.
+     * The $key param is the name of the column in the table, so we can safely use it directly without fear of injection.
+     * As this filter is made specifically for custom fields, we count the number of records for each value of
+     * the given $key in the custom field data table.
+     *
+     * @param wunderbyte_table $table The table instance.
+     * @param string $key The column or field key to aggregate values for.
+     * @return array An associative array of filter options and their counts.
+     */
+    protected static function get_db_filter_column_for_custom_field(wunderbyte_table $table, string $key): array {
+        global $DB;
+
+        /** @var customfieldfilter $filter */
+        $filter = $table->filters[$key];
+        $customfieldid = $filter->fieldid ?? null;
+
         $sql = "
             SELECT cfd.value as $key, COUNT('$key') as keycount
             FROM {customfield_data} cfd
-            WHERE cfd.fieldid = :fieldid
+            WHERE cfd.fieldid = :countfieldid
+            AND cfd.instanceid IN (select id FROM {$table->sql->from} WHERE {$table->sql->where})
             GROUP BY cfd.value
             ORDER BY $key ASC
         ";
-        $params = ['fieldid' => $customfieldid];
+        $params = ['countfieldid' => $customfieldid];
+
+        $params = array_merge($params, $table->sql->params);
 
         $records = $DB->get_records_sql($sql, $params);
 
+        // Check if there minimum one valid key.
+        $novalidkey = true;
+        foreach ($records as $k => $v) {
+            if (!empty($k) && !empty($v->{$key})) {
+                $novalidkey = false;
+                break;
+            }
+        }
+
         // If there are only empty strings, we don't want the filter to show.
-        if (
-            !$records
-            || (reset($records)->{$key} === null
-            || reset($records)->{$key} === '')
-        ) {
+        if (!$records || $novalidkey) {
             return [
                 'continue' => true,
             ];
         } else {
             return $records;
         }
+    }
+
+    /**
+     * Set $countkeys to false.
+     *
+     * You need to call add_options() and pass your own options when you call this function.
+     *
+     * @return void
+     */
+    public function dont_count_keys() {
+        $this->countkeys = false;
+    }
+
+    /**
+     * This function takes a key value pair of options.
+     * Only if there are actual results in the table, these options will be displayed.
+     * The keys are the results, the values are the localized strings.
+     * For the standard filter, it's not necessary to provide these options...
+     * They will be gathered automatically.
+     *
+     * @param array $options
+     * @return void
+     */
+    public function add_options(array $options = []) {
+        foreach ($options as $key => $value) {
+            $this->options[$key] = $value;
+        }
+    }
+
+    /**
+     * Sets `$inuseoperator` to 'ilike'.
+     * This makes the generated query use the following format to filter the results.
+     *
+     *   ('' || ',' || COLUMNVALUE || ',' ILIKE '%desiredvalue%' ESCAPE '\')
+     *
+     * Note that this may cause the query to perform slower.
+     *
+     * @return void
+     */
+    public function use_operator_ilike(): void {
+        $this->inuseoperator = 'ilike';
+    }
+
+    /**
+     * Sets `$inuseoperator` to '='.
+     * This makes the generated query use the following format to filter the results.
+     *
+     * COLUMNVALUE = 'desiredvalue'
+     *
+     * Using '=' may make the query perform faster than 'ilike', but it only filters results that match the exact value.
+     *
+     * @return void
+     */
+    public function use_operator_equal(): void {
+        $this->inuseoperator = '=';
     }
 }

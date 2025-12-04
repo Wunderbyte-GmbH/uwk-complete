@@ -17,10 +17,9 @@
 namespace mod_booking\booking_rules\actions;
 
 use core_user;
-use dml_missing_record_exception;
+use Exception;
 use mod_booking\booking_rules\booking_rule_action;
 use mod_booking\placeholders\placeholders_info;
-use mod_booking\singleton_service;
 use mod_booking\task\send_mail_by_rule_adhoc;
 use MoodleQuickForm;
 use stdClass;
@@ -91,6 +90,10 @@ class send_mail implements booking_rule_action {
      */
     public function add_action_to_mform(MoodleQuickForm &$mform, array &$repeateloptions) {
 
+        // Placeholders info text.
+        $placeholders = placeholders_info::return_list_of_placeholders();
+        $mform->addElement('html', get_string('helptext:placeholders', 'mod_booking', $placeholders));
+
         // Mail subject.
         $mform->addElement(
             'text',
@@ -122,10 +125,6 @@ class send_mail implements booking_rule_action {
         );
         $mform->hideIf('action_send_mail_sendicalcreateorcancel', 'action_send_mail_sendical', 'eq', 0);
         $mform->setType('action_send_mail_sendicalcreateorcancel', PARAM_RAW);
-
-        // Placeholders info text.
-        $placeholders = placeholders_info::return_list_of_placeholders();
-        $mform->addElement('html', get_string('helptext:placeholders', 'mod_booking', $placeholders));
     }
 
     /**
@@ -202,11 +201,8 @@ class send_mail implements booking_rule_action {
         }
         // Only execute for active users.
         try {
-            $user = core_user::get_user($record->userid, '*', MUST_EXIST);
-        } catch (dml_missing_record_exception $e) {
-            return;
-        }
-        if ($user->deleted || $user->suspended) {
+            core_user::require_active_user(core_user::get_user($record->userid, '*', MUST_EXIST), true, true);
+        } catch (Exception $e) {
             return;
         }
 
@@ -235,31 +231,34 @@ class send_mail implements booking_rule_action {
         if (!empty($record->optiondateid)) {
             $taskdata['optiondateid'] = $record->optiondateid;
         }
-        $user = singleton_service::get_instance_of_user($record->userid);
-        if (!empty($user->suspended)) {
-            return;
-        }
+
         $task->set_custom_data($taskdata);
         $task->set_userid($record->userid);
 
         $task->set_next_run_time($record->nextruntime);
 
-        $similartask = $DB->get_record('task_adhoc', [
+        // If the same task already exists, don't queue it again.
+        $similartasks = $DB->get_records('task_adhoc', [
             'nextruntime' => $record->nextruntime,
             'userid' => $record->userid,
             ]);
 
-        if ($similartask && isset($similartask->customdata)) {
-            $oldtaskdata = json_decode($similartask->customdata);
-            unset($oldtaskdata->optiondateid);
-            unset($taskdata['optiondateid']);
-            if ($oldtaskdata == (object)$taskdata) {
-                // A similar task has already been created before, we therefore don't queue the task again.
-                return;
+        if (!empty($similartasks)) {
+            foreach ($similartasks as $similartask) {
+                if (!isset($similartask->customdata)) {
+                    continue;
+                }
+                $oldtaskdata = json_decode($similartask->customdata);
+                unset($oldtaskdata->optiondateid);
+                unset($taskdata['optiondateid']);
+                if ($oldtaskdata == (object)$taskdata) {
+                    // A similar task has already been created before, we therefore don't queue the task again.
+                    return;
+                }
             }
         }
 
-        // Now queue the task or reschedule it if it already exists (with matching data).
+        // Now queue the task or reschedule it.
         \core\task\manager::reschedule_or_queue_adhoc_task($task);
     }
 }

@@ -1147,6 +1147,8 @@ function block_progress_modules_in_use($course) {
  */
 function block_progress_event_information($config, $modules, $course, $userid = 0) {
     global $DB, $USER;
+   
+    if ($config === null) return 0;    
 
     $dbmanager = $DB->get_manager(); // Used to check if fields exist.
     $events = array();
@@ -1173,7 +1175,7 @@ function block_progress_event_information($config, $modules, $course, $userid = 
         // Check if this type of module is used in the course, gather instance info.
         $records = $DB->get_records($module, array('course' => $course), '', $fields);
         foreach ($records as $record) {
-
+            
             // Is the module being monitored?
             if (isset($config->{'monitor_'.$module.$record->id})) {
                 $numeventsconfigured++;

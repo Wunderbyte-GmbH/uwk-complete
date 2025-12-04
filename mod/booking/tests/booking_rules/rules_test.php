@@ -62,17 +62,13 @@ final class rules_test extends advanced_testcase {
 
     /**
      * Mandatory clean-up after each test.
+     * @return void
      */
     public function tearDown(): void {
-        global $DB;
-
         parent::tearDown();
-        // Mandatory to solve potential cache issues.
-        singleton_service::destroy_instance();
-        // Mandatory to deal with static variable in the booking_rules.
-        rules_info::destroy_singletons();
-        booking_rules::$rules = [];
-        cartstore::reset();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
     }
 
     /**
@@ -1062,7 +1058,10 @@ final class rules_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
         $result = booking_bookit::bookit('option', $settings->id, $student1->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
@@ -1211,6 +1210,10 @@ final class rules_test extends advanced_testcase {
         $this->setUser($student2);
 
         $result = booking_bookit::bookit('option', $settings->id, $student2->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student2->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+        $result = booking_bookit::bookit('option', $settings->id, $student2->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -1223,6 +1226,10 @@ final class rules_test extends advanced_testcase {
         // Book the student1 via waitinglist.
         $this->setUser($student1);
 
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
         $result = booking_bookit::bookit('option', $settings->id, $student1->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
@@ -1921,6 +1928,10 @@ final class rules_test extends advanced_testcase {
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
         $result = booking_bookit::bookit('option', $settings->id, $user2->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user2->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+        $result = booking_bookit::bookit('option', $settings->id, $user2->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
         // User doesn't have supervisor, so no tasks expected.
@@ -1930,6 +1941,10 @@ final class rules_test extends advanced_testcase {
         $this->setUser($user1);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
+        $result = booking_bookit::bookit('option', $settings->id, $user1->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user1->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
         $result = booking_bookit::bookit('option', $settings->id, $user1->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $user1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);

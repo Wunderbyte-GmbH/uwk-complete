@@ -33,7 +33,6 @@ require_once("$CFG->libdir/tablelib.php");
 use cache;
 use context_system;
 use Exception;
-use local_wunderbyte_table\event\table_viewed;
 use local_wunderbyte_table\output\lazytable;
 use local_wunderbyte_table\output\table;
 use moodle_exception;
@@ -412,13 +411,30 @@ class wunderbyte_table extends table_sql {
     public $switchtemplates = [];
 
     /**
+     * Whether we need to bypass the cache or not.
+     * @var bool $bypasscache
+     */
+    public $bypasscache = false;
+
+    /**
+     * The user ID for whom the table is going to be rendered.
+     * @var int $foruserid
+     */
+    public $foruserid = 0;
+
+    /**
      * Constructor. Does store uniqueid as hashed value and the actual classname.
      * The $uniqueid should be composed by ASCII alphanumeric characters, underlines and spaces only!
      * It is recommended to avoid of usage of simple single words like "table" to reduce chance of affecting by Moodle`s core CSS
      *
      * @param string $uniqueid Has to be really unique eg. by adding the cmid, so it's unique over all instances of one plugin!
+     * @param int $foruserid Optional argument. We use this to store the userid on the table. Since the
+     *        table instance is cached, we can also retrieve it from the cached instance identified by the
+     *        idstring. When you pass $foruserid, this prevents the idstring from being recreated based
+     *        on the query, ensuring we do not receive an incorrect instance. This also has no effect on
+     *        caching of the same query.
      */
-    public function __construct($uniqueid) {
+    public function __construct($uniqueid, int $foruserid = 0) {
 
         global $PAGE;
 
@@ -435,6 +451,7 @@ class wunderbyte_table extends table_sql {
 
         parent::__construct($uniqueid);
 
+        $this->foruserid = $foruserid;
         $this->idstring = md5($uniqueid . $this->context->id ?? 1);
         $this->classname = get_class($this);
 
@@ -1206,6 +1223,7 @@ class wunderbyte_table extends table_sql {
             !get_config('local_wunderbyte_table', 'turnoffcaching')
             && $this->cachecomponent
             && $this->rawcachename
+            && !$this->bypasscache
         ) {
             $cache = cache::make($this->cachecomponent, $this->rawcachename);
             $cachedrawdata = $cache->get($cachekey);
@@ -1601,6 +1619,9 @@ class wunderbyte_table extends table_sql {
             }
         }
 
+        // Get 'hide filters that cause the cache to be bypassed' option and check if it is enabled.
+        $hideallfiltershavingbypasscache = get_config('loca_wunderbyte_table', 'hideallfiltershavingbypasscache');
+
         foreach ($filterobject as $categorykey => $categoryvalue) {
             if (!empty($categoryvalue)) {
                 // For the first filter in a category we append AND.
@@ -1617,6 +1638,18 @@ class wunderbyte_table extends table_sql {
                     } else {
                         $class = new $classname($categorykey, $filtersetting['localizedname']);
                     }
+
+                    // Check if the option 'hide filters that cause the cache to be bypassed' is enabled.
+                    // If yes, we don't apply the filters that their $bypasscache property is equal to true.
+                    if ($hideallfiltershavingbypasscache && $class->if_bypass_cache()) {
+                        continue;
+                    }
+
+                    // If no, check if this filter wants the cache to be byüpassed.
+                    if ($class->if_bypass_cache()) {
+                        $this->bypasscache = true;
+                    }
+
                     $class->apply_filter($filter, $categorykey, $categoryvalue, $this);
 
                     // phpcs:ignore moodle.Commenting.TodoComment.MissingInfoInline
@@ -1788,7 +1821,9 @@ class wunderbyte_table extends table_sql {
         // We don't want errormessage in the encoded table.
         $this->errormessage = '';
 
-        $this->recreateidstring();
+        if ($this->foruserid === 0) {
+            $this->recreateidstring();
+        }
 
         if (empty($this->tablecachehash) || $newcache) {
             $cache = cache::make('local_wunderbyte_table', 'encodedtables');

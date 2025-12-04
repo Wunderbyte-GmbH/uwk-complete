@@ -34,7 +34,7 @@ use mod_booking\customfield\booking_handler;
 use mod_booking\local\modechecker;
 use mod_booking\teachers_handler;
 use mod_booking\utils\wb_payment;
-use moodle_exception;
+use local_wunderbyte_table\wunderbyte_table;
 use stdClass;
 use moodle_url;
 
@@ -1152,6 +1152,7 @@ class booking {
      * @param array $bookingparams
      * @param string $additionalwhere
      * @param string $innerfrom
+     * @param ?wunderbyte_table $tableinstance
      *
      * @return array
      */
@@ -1166,7 +1167,8 @@ class booking {
         $userid = null,
         $bookingparams = [MOD_BOOKING_STATUSPARAM_BOOKED],
         $additionalwhere = '',
-        $innerfrom = ''
+        $innerfrom = '',
+        $tableinstance = null
     ) {
 
         global $DB;
@@ -1176,7 +1178,7 @@ class booking {
         $offieldsarray = array_map(fn($a) => "bo.$a->name", $columns);
 
         if (empty($fields)) {
-            $fields = "DISTINCT s1.*";
+            $fields = " s1.*";
         }
 
         $where = '';
@@ -1188,7 +1190,7 @@ class booking {
         $groupby = " " . implode(", ", $offieldsarray) . " ";
 
         $outerfrom = "(
-                        SELECT DISTINCT $groupby ";
+                        SELECT $groupby ";
 
         $innerfrom = empty($innerfrom) ? "FROM {booking_options} bo" : $innerfrom;
 
@@ -1228,8 +1230,27 @@ class booking {
             $params = array_merge($params, $inparams);
         }
 
+        // Checks if we need to select custom fields.
+        $requiredcustomfields = self::check_required_custom_fields(
+            $searchtext,
+            $fields,
+            $context,
+            $filterarray,
+            $wherearray,
+            $userid,
+            $bookingparams,
+            $additionalwhere,
+            $innerfrom,
+            $tableinstance
+        );
+
+        if (empty($requiredcustomfields)) {
+            [$select1, $from1, $filter1, $params1] = ["", "", "", []];
+        } else {
+            [$select1, $from1, $filter1, $params1] =
+                booking_option_settings::return_sql_for_customfield($filterarray, $requiredcustomfields);
+        }
         // Instead of "where" we return "filter". This is to support the filter functionality of wunderbyte table.
-        [$select1, $from1, $filter1, $params1] = booking_option_settings::return_sql_for_customfield();
         [$select2, $from2, $filter2, $params2] = booking_option_settings::return_sql_for_teachers();
         [$select3, $from3, $filter3, $params3] = booking_option_settings::return_sql_for_imagefiles();
         [$select4, $from4, $filter4, $params4, $conditionsql] = bo_info::return_sql_from_conditions($userid ?? 0);
@@ -1246,8 +1267,9 @@ class booking {
 
         $pattern = '/as.*?,/';
         $addgroupby = preg_replace($pattern, ',', $select1 . ",");
-
         $groupby .= !empty($addgroupby) ? ' , ' . $addgroupby : '';
+
+        $groupby .= '';
 
         $addgroupby = preg_replace($pattern, ',', $select3 . ",");
         $groupby .= !empty($addgroupby) ? ' , ' . $addgroupby : '';
@@ -2138,5 +2160,100 @@ class booking {
                    AND cm.id=:cmid";
         $params = ['cmid' => $cmid];
         return !empty($DB->get_records_sql($sql, $params));
+    }
+
+    /**
+     * This function checks if we need to select custom fields.
+     *
+     * We need to select custom fields when any of the following conditions are met:
+     * - If a custom field is present in the $searchtext, $fields, $additionalwhere, or $innerfrom strings.
+     * - If a custom field is present in the $filterarray or $wherearray arrays.
+     * - If a custom field is selected as a sortable column.
+     *
+     * @param string $searchtext
+     * @param ?string $fields
+     * @param ?object $context
+     * @param array $filterarray
+     * @param array $wherearray
+     * @param ?int $userid
+     * @param array $bookingparams
+     * @param string $additionalwhere
+     * @param string $innerfrom
+     * @param ?wunderbyte_table $tableinstance
+     * @return array a list of custom field shortnames that are required.
+     */
+    protected static function check_required_custom_fields(
+        $searchtext = '',
+        $fields = null,
+        $context = null,
+        $filterarray = [],
+        $wherearray = [],
+        $userid = null,
+        $bookingparams = [MOD_BOOKING_STATUSPARAM_BOOKED],
+        $additionalwhere = '',
+        $innerfrom = '',
+        $tableinstance = null
+    ): array {
+        $requiredcustomfields = [];
+
+        // Get all booking custom fields.
+        $customfields = array_map(
+            fn($item) => $item->shortname,
+            booking_handler::get_customfields()
+        );
+
+        // Prepare string-like variables for easier checking.
+        $stringinputs = [];
+        foreach ([$searchtext, $fields, $additionalwhere, $innerfrom] as $value) {
+            // Normalize arrays or objects into strings for search purposes.
+            if (is_array($value)) {
+                $stringinputs[] = json_encode($value);
+            } else if (is_object($value)) {
+                $stringinputs[] = json_encode((array)$value);
+            } else if (is_string($value)) {
+                $stringinputs[] = $value;
+            }
+        }
+
+        // Prepare array-like inputs for easier checking.
+        $arrayinputs = array_merge($filterarray, $wherearray);
+
+        foreach ($customfields as $customfield) {
+            // 1. Check if any custom field name appears in string-like inputs.
+            foreach ($stringinputs as $stringinput) {
+                if (!empty($stringinput) && stripos($stringinput, $customfield) !== false) {
+                    $requiredcustomfields[] = $customfield;
+                    continue 2; // Move to next custom field once matched.
+                }
+            }
+
+            // 2. Check if any custom field is used in filter or where arrays.
+            foreach ($arrayinputs as $key => $value) {
+                if (is_string($key) && stripos($key, $customfield) !== false) {
+                    $requiredcustomfields[] = $customfield;
+                    continue 2;
+                }
+            }
+
+            // 3. Check sortable columns if there are any custom fields.
+            $sortablecolumns = empty($tableinstance) ? [] : array_keys($tableinstance->sortablecolumns);
+            if (in_array($customfield, $sortablecolumns, true)) {
+                $requiredcustomfields[] = $customfield;
+            }
+
+            // 4. Check columns if there are any custom fields.
+            $columns = empty($tableinstance) ? [] : array_keys($tableinstance->columns);
+            if (in_array($customfield, $columns, true)) {
+                $requiredcustomfields[] = $customfield;
+            }
+
+            // 5. Check full text search columns if there are any custom fields.
+            $columns = empty($tableinstance) ? [] : array_keys($tableinstance->fulltextsearchcolumns);
+            if (in_array($customfield, $columns, true)) {
+                $requiredcustomfields[] = $customfield;
+            }
+        }
+
+        return array_values(array_unique($requiredcustomfields));
     }
 }

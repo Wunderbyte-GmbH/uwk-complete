@@ -315,11 +315,13 @@ class optionstoconfirm extends option {
                     u.username,
                     u.firstname,
                     u.lastname,
-                    u.email,
+                    u.email, "
+                    . $DB->sql_concat('u.firstname', "' '", 'u.lastname') . " as name,
                     ba.waitinglist,
                     ba.status,
                     ba.notes,
                     bo.text,
+                    bo.coursestarttime,
                     $selectpresencecount
                     ba.timemodified,
                     ba.timecreated,

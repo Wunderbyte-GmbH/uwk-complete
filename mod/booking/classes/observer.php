@@ -193,7 +193,7 @@ class mod_booking_observer {
     public static function checkout_completed(\local_shopping_cart\event\checkout_completed $event) {
         // We need this to correctly update receipts for installment payments.
         if (
-            $event->other['componentname'] == 'mod_booking'
+            ($event->other['componentname'] ?? '') == 'mod_booking'
             && $event->other['area'] == 'option'
         ) {
             cache_helper::invalidate_by_event('setbackoptionsanswers', [$event->other['itemid']]);
@@ -394,6 +394,31 @@ class mod_booking_observer {
             debugging('Booking option completion message could not be sent. ' .
                 'Exception in function observer.php/bookingoption_completed.');
         }
+    }
+
+    /**
+     * When a booking option is uncompleted, we also call booking_activitycompletion.
+     *
+     * @param \mod_booking\event\bookingoption_uncompleted $event
+     */
+    public static function bookingoption_uncompleted(\mod_booking\event\bookingoption_uncompleted $event) {
+
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/booking/lib.php');
+
+        $optionid = $event->objectid;
+        $cmid = $event->other['cmid'];
+
+        $bookingoption = singleton_service::get_instance_of_booking_option($cmid, $optionid);
+        $selecteduserid = $event->relateduserid;
+
+        // Here, we check if the activity has to be uncompleted for the concerned users.
+        booking_activitycompletion(
+            [$selecteduserid],
+            $bookingoption->booking->settings,
+            $cmid,
+            $optionid
+        );
     }
 
     /**

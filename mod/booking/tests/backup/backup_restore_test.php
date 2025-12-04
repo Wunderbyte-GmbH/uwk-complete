@@ -59,11 +59,10 @@ final class backup_restore_test extends advanced_testcase {
      * Mandatory clean-up after each test.
      */
     public function tearDown(): void {
-        global $DB;
-
         parent::tearDown();
-        // Mandatory clean-up.
-        singleton_service::destroy_instance();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
     }
 
     /**
@@ -225,7 +224,7 @@ final class backup_restore_test extends advanced_testcase {
         $booking21 = array_shift($bookings2);
         $this->assertEquals($bookings[0]->name, $booking21->get_name());
         $bookingobj = singleton_service::get_instance_of_booking_by_bookingid((int)$booking21->instance);
-        $options2 = $bookingobj->get_all_options();
+        $options2 = $bookingobj->get_all_options(0, 0, '', '*, spt1');
         $this->assertCount(2, $options2);
         foreach ($options2 as $option2) {
             // In rare cases - order of options could be inverted.
@@ -277,7 +276,7 @@ final class backup_restore_test extends advanced_testcase {
         $booking22 = array_shift($bookings2);
         $this->assertEquals($bookings[1]->name, $booking22->get_name());
         $bookingobj = singleton_service::get_instance_of_booking_by_bookingid((int)$booking22->instance);
-        $options2 = $bookingobj->get_all_options();
+        $options2 = $bookingobj->get_all_options(0, 0, '', '*, spt1');
         $this->assertCount(2, $options2);
         foreach ($options2 as $option2) {
             // In rare cases - order of options could be inverted.

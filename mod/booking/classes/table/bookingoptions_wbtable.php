@@ -236,7 +236,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
      * @throws dml_exception
      */
     public function col_booknow($values) {
-
+        global $USER;
         // If $values->id is missing, we show the values object in debug mode, so we can investigate what happens.
         if (empty($values->id)) {
             $debugmessage = "bookingoptions_wbtable function col_booknow: ";
@@ -248,9 +248,19 @@ class bookingoptions_wbtable extends wunderbyte_table {
 
         $settings = singleton_service::get_instance_of_booking_option_settings($values->id, $values);
 
-        $buyforuser = price::return_user_to_buy_for();
+        // We get the user ID from the table instance.
+        // It is 0 by default but can be set, for example,
+        // when rendering booking options for a specific user via the cashier page.
+        $buyforuser = $this->foruserid;
 
-        return booking_bookit::render_bookit_button($settings, $buyforuser->id);
+        // We need to make sure that a user is set for the rendering of the button. When it is equal to 0,
+        // we use the logged-in user. Leaving it as 0 may cause problems in the booking process,
+        // for example when a pre-form is involved.
+        if ($buyforuser == 0) {
+            $buyforuser = $USER->id;
+        }
+
+        return booking_bookit::render_bookit_button($settings, $buyforuser);
     }
 
     /**
@@ -320,7 +330,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
             return '';
         }
 
-        $title = $values->text;
+        $title = format_string($values->text);
 
         // If we download, we return the raw title without link or prefix.
         if ($this->is_downloading()) {
@@ -365,10 +375,9 @@ class bookingoptions_wbtable extends wunderbyte_table {
         }
 
         if (!empty($values->titleprefix)) {
-            $title = $values->titleprefix . ' - ' . $values->text;
+            $titleprefix = format_string($values->titleprefix);
+            $title = $titleprefix . ' - ' . $title;
         }
-
-        $title = format_string($title);
 
         if (!get_config('booking', 'openbookingdetailinsametab')) {
             $title = "<div class='bookingoptions-wbtable-option-title'><a href='$url' target='_blank'>$title</a></div>";
@@ -685,7 +694,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
         }
 
         $settings = singleton_service::get_instance_of_booking_option_settings($values->id, $values);
-        return $settings->institution;
+        return format_string($settings->institution);
     }
 
     /**

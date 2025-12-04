@@ -23,6 +23,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core\lock\lock;
 use mod_booking\booking;
 use mod_booking\booking_rules\booking_rules;
 use mod_booking\booking_rules\rules_info;
@@ -37,6 +38,9 @@ use mod_booking\price as Mod_bookingPrice;
 use local_shopping_cart\shopping_cart;
 use local_shopping_cart\local\cartstore;
 use mod_booking\bo_actions\actions_info;
+use mod_booking\bo_availability\conditions\maxoptionsfromcategory;
+use mod_booking\enrollink;
+use tool_mocktesttime\time_mock;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -67,6 +71,31 @@ class mod_booking_generator extends testing_module_generator {
         $this->bookingoptions = 0;
 
         parent::reset();
+    }
+
+    /**
+     * Teardown function to make sure no singletons are left.
+     *
+     * @return void
+     *
+     */
+    public function teardown() {
+        // Booking.
+        cache_helper::purge_all();
+        singleton_service::destroy_instance();
+        singleton_service::reset_campaigns();
+        maxoptionsfromcategory::reset_instance();
+        enrollink::destroy_instances();
+        rules_info::destroy_singletons();
+        rules_info::$rulestoexecute = [];
+        booking_rules::$rules = [];
+        // Shopping cart.
+        cartstore::reset();
+        // Time mock.
+        time_mock::reset_mock_time();
+        // Clean up globals after each test.
+        $_GET = [];
+        $_POST = [];
     }
 
     /**
@@ -202,6 +231,28 @@ class mod_booking_generator extends testing_module_generator {
 
         // Create / save booking option(s).
         $record->id = booking_option::update($record, $context);
+
+        // Add teachers for option dates if given.
+        if ($teachersforoptiondates = preg_grep('/^teachersforoptiondate_/', array_keys((array)$record))) {
+            $settings = singleton_service::get_instance_of_booking_option_settings($record->id);
+            $newteacherrecord = new stdClass();
+            foreach ($teachersforoptiondates as $teachersforoptiondate) {
+                [$a, $counter] = explode('_', $teachersforoptiondate);
+                // Only is corresponded optiondate exists.
+                if (isset($settings->sessions[array_keys($settings->sessions)[$counter]])) {
+                    // Get teachers IDs.
+                    $teacherarr = explode(',', $record->{$teachersforoptiondate});
+                    foreach ($teacherarr as $teacher) {
+                        if ($userid = $this->get_user(trim($teacher))) {
+                            // Only if corresponded user exists.
+                            $newteacherrecord->optiondateid = array_keys($settings->sessions)[$counter];
+                            $newteacherrecord->userid = $userid;
+                            $DB->insert_record('booking_optiondates_teachers', $newteacherrecord);
+                        }
+                    }
+                }
+            }
+        }
 
         // Override to force given timemadevisible.
         if (!empty($record->timemadevisible)) {
@@ -516,17 +567,31 @@ class mod_booking_generator extends testing_module_generator {
         // Create the table.
         $showonlyonetable = new bookingoptions_wbtable("cmid_{$settings->cmid}_optionid_{$optionid} showonlyonetable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $view->wbtable_initialize_layout($showonlyonetable, false, false, false);
+
         $wherearray = [
             'bookingid' => (int) $booking->id,
             'id' => $optionid,
         ];
         [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    null,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $showonlyonetable
+                );
         $showonlyonetable->set_filter_sql($fields, $from, $where, $filter, $params);
 
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $view->wbtable_initialize_layout($showonlyonetable, false, false, false);
         $showonlyonetable->printtable(10, true);
 
         return $showonlyonetable->rawdata ?? [];
@@ -560,5 +625,59 @@ class mod_booking_generator extends testing_module_generator {
             throw new Exception('The specified rule with name "' . $rulename . '" does not exist');
         }
         return $id;
+    }
+
+    /**
+     * Helper to run tasks within time.
+     *
+     *
+     * @param mixed $mocktime
+     *
+     * @return void
+     *
+     */
+    public function runtaskswithintime($mocktime) {
+        global $CFG, $DB;
+
+        $params = [];
+        $lockfactory = \core\lock\lock_config::get_lock_factory('cron');
+        $lock = $lockfactory->get_lock('test_lock', 10);
+        $lock->release();
+        $cronlock = $lockfactory->get_lock('cron_lock', 10);
+        $cronlock->release();
+
+        $tasks = $DB->get_recordset('task_adhoc', $params);
+        foreach ($tasks as $record) {
+            if ($record->nextruntime <= $mocktime) {
+                $task = \core\task\manager::adhoc_task_from_record($record);
+                $user = null;
+                if ($userid = $task->get_userid()) {
+                    // This task has a userid specified.
+                    $user = \core_user::get_user($userid);
+
+                    // User found. Check that they are suitable.
+                    \core_user::require_active_user($user, true, true);
+                }
+
+                $task->set_lock($lock);
+                $cronlock->release();
+
+                if ($CFG->version >= 2023042400) {
+                    // Moodle 4.2 and newer.
+                    \core\cron::prepare_core_renderer();
+                    \core\cron::setup_user($user);
+                } else {
+                    // Moodle 4.1 and older.
+                    cron_prepare_core_renderer();
+                    cron_setup_user($user);
+                }
+
+                $task->execute();
+                \core\task\manager::adhoc_task_complete($task);
+
+                unset($task);
+            }
+        }
+        $tasks->close();
     }
 }

@@ -24,6 +24,7 @@ use mod_booking\bo_availability\bo_info;
 use mod_booking\booking_answers\booking_answers;
 use mod_booking\table\manageusers_table;
 use local_wunderbyte_table\wunderbyte_table;
+use tool_mocktesttime\time_mock;
 use mod_booking_generator;
 use context_module;
 
@@ -37,6 +38,27 @@ use context_module;
  *
  */
 final class confirmation_test extends advanced_testcase {
+    /**
+     * Tests set up.
+     */
+    public function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        time_mock::init();
+        time_mock::set_mock_time(strtotime('now'));
+        singleton_service::destroy_instance();
+    }
+
+    /**
+     * Mandatory clean-up after each test.
+     */
+    public function tearDown(): void {
+        parent::tearDown();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
+    }
+
     /**
      * Creates booking course, users, and booking option with given settings.
      * @param int $confirmationtrainerenabled
@@ -254,8 +276,13 @@ final class confirmation_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-        $result = booking_bookit::bookit('option', $settings->id, $student1->id); // Book the first user.
 
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id); // Book the first user.
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -278,8 +305,13 @@ final class confirmation_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-        $result = booking_bookit::bookit('option', $settings->id, $student2->id);
 
+        $result = booking_bookit::bookit('option', $settings->id, $student2->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student2->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+
+        $result = booking_bookit::bookit('option', $settings->id, $student2->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -303,8 +335,13 @@ final class confirmation_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student3->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-        $result = booking_bookit::bookit('option', $settings->id, $student3->id);
 
+        $result = booking_bookit::bookit('option', $settings->id, $student3->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student3->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+
+        $result = booking_bookit::bookit('option', $settings->id, $student3->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student3->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -329,8 +366,13 @@ final class confirmation_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student4->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-        $result = booking_bookit::bookit('option', $settings->id, $student4->id);
 
+        $result = booking_bookit::bookit('option', $settings->id, $student4->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student4->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+
+        $result = booking_bookit::bookit('option', $settings->id, $student4->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student4->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -370,8 +412,13 @@ final class confirmation_test extends advanced_testcase {
 
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
-        $result = booking_bookit::bookit('option', $settings->id, $student1->id); // Book the first user.
 
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id);
+        [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+
+        $result = booking_bookit::bookit('option', $settings->id, $student1->id); // Book the first user.
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 

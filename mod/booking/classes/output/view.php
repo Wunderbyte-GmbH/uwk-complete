@@ -29,6 +29,7 @@ use coding_exception;
 use context_module;
 use context_system;
 use dml_exception;
+use local_wunderbyte_table\filters\types\customfieldfilter;
 use local_wunderbyte_table\filters\types\datepicker;
 use local_wunderbyte_table\filters\types\standardfilter;
 use local_wunderbyte_table\wunderbyte_table;
@@ -363,14 +364,27 @@ class view implements renderable, templatable {
         // Create the table.
         $allbookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid} electivetable");
 
-        $wherearray = ['bookingid' => (int)$booking->id];
-        [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
-        $allbookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
         // Initialize the default columnes, headers, settings and layout for the table.
         // In the future, we can parametrize this function so we can use it on many different places.
         $this->wbtable_initialize_layout($allbookingoptionstable, true, true, true);
+
+        $wherearray = ['bookingid' => (int)$booking->id];
+        [$fields, $from, $where, $params, $filter] =
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    null,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $allbookingoptionstable
+                );
+        $allbookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
 
         $out = $allbookingoptionstable->outhtml($booking->get_pagination_setting(), true);
 
@@ -393,14 +407,27 @@ class view implements renderable, templatable {
         // Create the table.
         $allbookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid} allbookingoptionstable");
 
-        $wherearray = ['bookingid' => (int)$booking->id];
-        [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
-        $allbookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
         // Initialize the default columnes, headers, settings and layout for the table.
         // In the future, we can parametrize this function so we can use it on many different places.
         $this->wbtable_initialize_layout($allbookingoptionstable, true, true, true);
+
+        $wherearray = ['bookingid' => (int)$booking->id];
+        [$fields, $from, $where, $params, $filter] =
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    null,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $allbookingoptionstable
+                );
+        $allbookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -431,6 +458,10 @@ class view implements renderable, templatable {
         ];
         $additionalwhere = '(courseendtime > :timenow OR courseendtime = 0)';
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($activebookingoptionstable, true, true, true);
+
         [$fields, $from, $where, $params, $filter] =
             booking::get_options_filter_sql(
                 0,
@@ -442,17 +473,15 @@ class view implements renderable, templatable {
                 $wherearray,
                 null,
                 [MOD_BOOKING_STATUSPARAM_BOOKED],
-                $additionalwhere
+                $additionalwhere,
+                '',
+                $activebookingoptionstable
             );
 
         // Timenow is today at at 00.00.
         // The test is on courseendtime, if it has finished not already yesterday.
         $params['timenow'] = strtotime('today 00:00');
         $activebookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($activebookingoptionstable, true, true, true);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -478,14 +507,28 @@ class view implements renderable, templatable {
         // Create the table.
         $mybookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_userid_{$USER->id} mybookingoptionstable");
 
-        $wherearray = ['bookingid' => (int)$booking->id];
-        [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray, $USER->id);
-        $mybookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
         // Initialize the default columnes, headers, settings and layout for the table.
         // In the future, we can parametrize this function so we can use it on many different places.
         $this->wbtable_initialize_layout($mybookingoptionstable, true, true, true);
+
+        $wherearray = ['bookingid' => (int)$booking->id];
+        [$fields, $from, $where, $params, $filter] =
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    $USER->id,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $mybookingoptionstable
+                );
+
+        $mybookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
 
         // For mybookingstable we need to apply a different cache, because it changes with every booking of a user.
         $mybookingoptionstable->define_cache('mod_booking', 'mybookingoptionstable');
@@ -522,17 +565,31 @@ class view implements renderable, templatable {
         // Create the table.
         $teacheroptionstable = new bookingoptions_wbtable("cmid_{$cmid}_teacherid_{$teacherid} teacheroptionstable");
 
+        // Initialize the default columns, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($teacheroptionstable, $tfilter, $tsearch, $tsort);
+
         $wherearray = [
             'bookingid' => (int)$booking->id,
             'teacherobjects' => '%"id":' . $teacherid . ',%',
         ];
         [$fields, $from, $where, $params, $filter] =
-            booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
-        $teacheroptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
+            booking::get_options_filter_sql(
+                0,
+                0,
+                '',
+                null,
+                $booking->context,
+                [],
+                $wherearray,
+                null,
+                [MOD_BOOKING_STATUSPARAM_BOOKED],
+                '',
+                '',
+                $teacheroptionstable
+            );
 
-        // Initialize the default columns, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($teacheroptionstable, $tfilter, $tsearch, $tsort);
+        $teacheroptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
 
         $teacheroptionstable->showreloadbutton = false; // No reload button on teacher pages.
         $teacheroptionstable->requirelogin = false; // Teacher pages need to be accessible without login.
@@ -569,6 +626,10 @@ class view implements renderable, templatable {
         // Create the table.
         $responsiblecontacttable = new bookingoptions_wbtable("cmid_{$cmid} responsiblecontacttable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($responsiblecontacttable, $tfilter, $tsearch, $tsort);
+
         $wherearray = ['bookingid' => (int)$booking->id];
         $additionalwhere = "CONCAT(',', responsiblecontact, ',') LIKE '%," . $USER->id . ",%'";
 
@@ -583,13 +644,11 @@ class view implements renderable, templatable {
                 $wherearray,
                 null,
                 [MOD_BOOKING_STATUSPARAM_BOOKED],
-                $additionalwhere
+                $additionalwhere,
+                '',
+                $responsiblecontacttable
             );
         $responsiblecontacttable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($responsiblecontacttable, $tfilter, $tsearch, $tsort);
 
         $responsiblecontacttable->showreloadbutton = false; // No reload button on teacher pages.
         $responsiblecontacttable->requirelogin = true;
@@ -625,17 +684,30 @@ class view implements renderable, templatable {
         // Create the table.
         $showonlyonetable = new bookingoptions_wbtable("cmid_{$cmid}_optionid_{$optionid} showonlyonetable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($showonlyonetable, false, false, false);
+
         $wherearray = [
             'bookingid' => (int) $booking->id,
             'id' => $optionid,
         ];
         [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    null,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $showonlyonetable
+                );
         $showonlyonetable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($showonlyonetable, false, false, false);
 
         $out = $showonlyonetable->outhtml(1, true);
 
@@ -656,17 +728,30 @@ class view implements renderable, templatable {
         // Create the table.
         $myinstitutiontable = new bookingoptions_wbtable("cmid_{$cmid} myinstitutiontable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($myinstitutiontable, true, true, true);
+
         $wherearray = [
             'bookingid' => (int) $booking->id,
             'institution' => $institution,
         ];
         [$fields, $from, $where, $params, $filter] =
-                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+                booking::get_options_filter_sql(
+                    0,
+                    0,
+                    '',
+                    null,
+                    $booking->context,
+                    [],
+                    $wherearray,
+                    null,
+                    [MOD_BOOKING_STATUSPARAM_BOOKED],
+                    '',
+                    '',
+                    $myinstitutiontable
+                );
         $myinstitutiontable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($myinstitutiontable, true, true, true);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -691,17 +776,30 @@ class view implements renderable, templatable {
         // Create the table.
         $visibleoptionstable = new bookingoptions_wbtable("cmid_{$cmid} visibleoptionstable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($visibleoptionstable, true, true, true);
+
         $wherearray = [
             'bookingid' => (int) $booking->id,
             'invisible' => 0,
         ];
         [$fields, $from, $where, $params, $filter] =
-            booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+            booking::get_options_filter_sql(
+                0,
+                0,
+                '',
+                null,
+                $booking->context,
+                [],
+                $wherearray,
+                null,
+                [MOD_BOOKING_STATUSPARAM_BOOKED],
+                '',
+                '',
+                $visibleoptionstable
+            );
         $visibleoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($visibleoptionstable, true, true, true);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -726,17 +824,30 @@ class view implements renderable, templatable {
         // Create the table.
         $invisibleoptionstable = new bookingoptions_wbtable("cmid_{$cmid} invisibleoptionstable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($invisibleoptionstable, true, true, true);
+
         $wherearray = [
             'bookingid' => (int) $booking->id,
             'invisible' => 1,
         ];
         [$fields, $from, $where, $params, $filter] =
-            booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+            booking::get_options_filter_sql(
+                0,
+                0,
+                '',
+                null,
+                $booking->context,
+                [],
+                $wherearray,
+                null,
+                [MOD_BOOKING_STATUSPARAM_BOOKED],
+                '',
+                '',
+                $invisibleoptionstable
+            );
         $invisibleoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($invisibleoptionstable, true, true, true);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -761,6 +872,10 @@ class view implements renderable, templatable {
         // Create the table.
         $whatsnewtable = new bookingoptions_wbtable("cmid_{$cmid} whatsnewtable");
 
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_layout($whatsnewtable, true, true, true);
+
         $wherearray = [
             'bookingid' => (int)$booking->id,
             'status' => 0, // Active. Not cancelled.
@@ -779,16 +894,14 @@ class view implements renderable, templatable {
                 $wherearray,
                 null,
                 [MOD_BOOKING_STATUSPARAM_BOOKED],
-                $additionalwhere
+                $additionalwhere,
+                '',
+                $whatsnewtable
             );
 
         // Timenow is today at at 00.00.
         $params['comparedate'] = (int)strtotime('today 00:00') - (int)get_config('booking', 'tabwhatsnewdays') * 86400;
         $whatsnewtable->set_filter_sql($fields, $from, $where, $filter, $params);
-
-        // Initialize the default columnes, headers, settings and layout for the table.
-        // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_layout($whatsnewtable, true, true, true);
 
         if ($lazy) {
             [$idstring, $encodedtable, $out]
@@ -952,7 +1065,7 @@ class view implements renderable, templatable {
         int $cmid = 0
     ) {
 
-        global $PAGE;
+        global $PAGE, $DB;
 
         if (!empty($cmid)) {
             $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
@@ -1032,6 +1145,39 @@ class view implements renderable, templatable {
         }
 
         if ($filter) {
+            // Booking availability filter.
+            $customfieldfilter = new customfieldfilter(
+                'availableplaces',
+                get_string('filterbookingavailability', 'mod_booking')
+            );
+            $customfieldfilter->bypass_cache();
+            $customfieldfilter->dont_count_keys();
+            $customfieldfilter->use_operator_equal();
+            // In the following query, we calculate available places (alias: availableplaces)
+            // and export the booking option ID and available places for each option as availableplacestbl.
+            // Then, we select the booking option IDs to pass them to the IN operator.
+            $subsql = "id IN (
+                    SELECT id FROM (
+                        SELECT sbo.id,
+                        CASE WHEN
+                            sbo.maxanswers=0
+                            OR (sbo.maxanswers - COUNT(CASE WHEN sba.waitinglist = 0 THEN 1 END)) > 0
+                        THEN '1'
+                        ELSE '0' END AS availableplaces
+                        FROM {booking_options} sbo
+                        LEFT JOIN {booking_answers} sba ON sba.optionid = sbo.id
+                        GROUP BY sbo.id, sbo.maxanswers, sba.optionid
+                    ) availableplacestbl
+                    WHERE :where
+            )";
+
+            $customfieldfilter->set_sql($subsql, "availableplaces");
+            $customfieldfilter->add_options([
+                '0' => get_string('filterfullybooked', 'mod_booking'),
+                '1' => get_string('filteravailalbetobook', 'mod_booking'),
+            ]);
+            $wbtable->add_filter($customfieldfilter);
+
             if (in_array('teacher', $optionsfields)) {
                 $standardfilter = new standardfilter('teacherobjects', get_string('teachers', 'mod_booking'));
                 $standardfilter->add_options(['jsonattribute' => 'name']);
@@ -1088,10 +1234,20 @@ class view implements renderable, templatable {
                 $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
                 $jsonsettings = $bookingsettings->jsonobject ?? [];
                 if (!empty($jsonsettings->customfieldsforfilter)) {
+                    // Fetch customs fileds with their ID from database.
+                    $shortnames = array_keys(get_object_vars($jsonsettings->customfieldsforfilter));
+
+                    [$insql, $params] = $DB->get_in_or_equal($shortnames, SQL_PARAMS_NAMED);
+                    $records = $DB->get_records_select('customfield_field', "shortname $insql", $params, '', 'id, shortname');
+                    $shortnamesid = [];
+                    foreach ($records as $record) {
+                        $shortnamesid[$record->shortname] = (int)$record->id;
+                    }
                     foreach ($jsonsettings->customfieldsforfilter as $shortname => $localizedname) {
                         $localizedname = format_string($localizedname);
-                        $standardfilter = new standardfilter($shortname, $localizedname);
-                        $wbtable->add_filter($standardfilter);
+                        $customfieldfilter = new customfieldfilter($shortname, $localizedname);
+                        $customfieldfilter->set_sql_for_fieldid($shortnamesid[$shortname]);
+                        $wbtable->add_filter($customfieldfilter);
                     }
                 }
             }

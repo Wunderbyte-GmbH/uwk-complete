@@ -65,18 +65,10 @@ final class rules_waitinglist_notification_test extends advanced_testcase {
      * Mandatory clean-up after each test.
      */
     public function tearDown(): void {
-        global $DB;
-
         parent::tearDown();
-        // Mandatory clean-up.
-        singleton_service::destroy_instance();
-        // Mandatory to deal with static variable in the booking_rules.
-        rules_info::destroy_singletons();
-        booking_rules::$rules = [];
-        cartstore::reset();
-        time_mock::reset_mock_time();
-        // phpcs:ignore
-        // mtrace(date('Y/m/d H:i:s', time_mock::get_mock_time())); // Debugging output.
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
     }
 
     /**
@@ -204,6 +196,10 @@ final class rules_waitinglist_notification_test extends advanced_testcase {
         $this->setUser($student2);
         singleton_service::destroy_user($student2->id);
         $result = booking_bookit::bookit('option', $settings1->id, $student2->id);
+        [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student2->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+        $result = booking_bookit::bookit('option', $settings1->id, $student2->id);
         [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student2->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -213,6 +209,10 @@ final class rules_waitinglist_notification_test extends advanced_testcase {
         $this->setUser($student3);
         singleton_service::destroy_user($student3->id);
         $result = booking_bookit::bookit('option', $settings1->id, $student3->id);
+        [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student3->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+        $result = booking_bookit::bookit('option', $settings1->id, $student3->id);
         [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student3->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
 
@@ -221,7 +221,10 @@ final class rules_waitinglist_notification_test extends advanced_testcase {
         $time = time_mock::get_mock_time();
         $this->setUser($student4);
         singleton_service::destroy_user($student4->id);
-        // Bookitbutton should NOT block if there are places on waitinglist.
+        $result = booking_bookit::bookit('option', $settings1->id, $student4->id);
+        [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student4->id, false);
+        // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+        $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
         $result = booking_bookit::bookit('option', $settings1->id, $student4->id);
         [$id, $isavailable, $description] = $boinfo1->is_available($settings1->id, $student4->id, true);
         $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);
@@ -485,6 +488,10 @@ final class rules_waitinglist_notification_test extends advanced_testcase {
             [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student[$i]->id, true);
             $this->assertEquals(MOD_BOOKING_BO_COND_ASKFORCONFIRMATION, $id);
             // They book it. So they should see 'wait for confirmation' button.
+            $result = booking_bookit::bookit('option', $settings->id, $student[$i]->id);
+            [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student[$i]->id, false);
+            // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+            $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
             $result = booking_bookit::bookit('option', $settings->id, $student[$i]->id);
             [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student[$i]->id, true);
             $this->assertEquals(MOD_BOOKING_BO_COND_ONWAITINGLIST, $id);

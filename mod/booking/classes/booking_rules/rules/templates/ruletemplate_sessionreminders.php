@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/mod/booking/lib.php');
  */
 class ruletemplate_sessionreminders {
     /** @var int $templateid */
-    public static $templateid = 13;
+    public static $templateid = 11;
 
     /** @var int $eventtype */
     public static $eventtype = 'rule_daysbefore';

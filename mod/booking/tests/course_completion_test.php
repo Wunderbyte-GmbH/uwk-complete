@@ -62,6 +62,16 @@ final class course_completion_test extends advanced_testcase {
     }
 
     /**
+     * Mandatory clean-up after each test.
+     */
+    public function tearDown(): void {
+        parent::tearDown();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
+    }
+
+    /**
      * Tests course completion triggers bookingoption completion.
      *
      *
@@ -72,6 +82,9 @@ final class course_completion_test extends advanced_testcase {
      * @throws \dml_exception
      *
      * @dataProvider booking_common_settings_provider
+     *
+     * @runInSeparateProcess
+     * @runTestsInSeparateProcesses
      */
     public function test_course_completion(array $data, array $expected = []): void {
         global $DB;

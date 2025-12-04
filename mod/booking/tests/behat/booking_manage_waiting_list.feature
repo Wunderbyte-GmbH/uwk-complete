@@ -114,11 +114,13 @@ Feature: In a course add a booking option and manage its waiting list
     And I am on the "My booking" Activity page logged in as student3
     And I should see "44.00 EUR" in the ".allbookingoptionstable_r1" "css_element"
     And I click on "Book it - on waitinglist" "text" in the ".allbookingoptionstable_r1" "css_element"
+    And I click on "Click again to confirm booking on waitinglist" "text" in the ".allbookingoptionstable_r1" "css_element"
     And I should see "Wait for confirmation" in the ".allbookingoptionstable_r1" "css_element"
     And I log out
     And I am on the "My booking" Activity page logged in as student4
     And I should see "55.00 EUR" in the ".allbookingoptionstable_r1" "css_element"
     And I click on "Book it - on waitinglist" "text" in the ".allbookingoptionstable_r1" "css_element"
+    And I click on "Click again to confirm booking on waitinglist" "text" in the ".allbookingoptionstable_r1" "css_element"
     And I should see "Wait for confirmation" in the ".allbookingoptionstable_r1" "css_element"
     And I log out
     When I am on the "My booking" Activity page logged in as teacher1
@@ -135,19 +137,19 @@ Feature: In a course add a booking option and manage its waiting list
     And I wait until the page is ready
     And I click on "[data-bs-target='#accordion-item-waitinglist']" "css_element"
     And I wait until the page is ready
-    And I click on the element with the number "2" with the dynamic identifier "waitinglist" and action "confirmbooking"
+    And I click on the element with the number "1" with the dynamic identifier "waitinglist" and action "confirmbooking"
     And I wait until the page is ready
     And I click on "Book" "button" in the ".modal-footer" "css_element"
     And I wait until the page is ready
     And I click on "[data-bs-target='#accordion-item-waitinglist']" "css_element"
     And I wait until the page is ready
-    And I click on the element with the number "3" with the dynamic identifier "waitinglist" and action "confirmbooking"
+    And I click on the element with the number "1" with the dynamic identifier "waitinglist" and action "confirmbooking"
     And I wait until the page is ready
     And I click on "Book" "button" in the ".modal-footer" "css_element"
     And I wait until the page is ready
     And I click on "[data-bs-target='#accordion-item-waitinglist']" "css_element"
     And I wait until the page is ready
-    And I click on the element with the number "4" with the dynamic identifier "waitinglist" and action "confirmbooking"
+    And I click on the element with the number "1" with the dynamic identifier "waitinglist" and action "confirmbooking"
     And I wait until the page is ready
     ## All listed above delays are critical for the test to pass at GitHub!
     And I click on "Book" "button" in the ".modal-footer" "css_element"

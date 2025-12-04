@@ -39,10 +39,10 @@ final class customfieldfilter_test extends advanced_testcase {
         $_POST = [];
     }
     /**
-     * Summary of test_if_customfiledfilter_filters_the_records
+     * test_if_customfieldfilter_filters_the_records_sample1
      * @return void
      */
-    public function test_if_customfiledfilter_filters_the_records_sample1(): void {
+    public function test_if_customfieldfilter_filters_the_records_sample1(): void {
         global $DB, $_GET;
 
         $_GET = [];
@@ -150,7 +150,11 @@ final class customfieldfilter_test extends advanced_testcase {
         $this->assertCount(6, $table->rawdata);
     }
 
-    public function test_if_customfiledfilter_filters_the_records_sample2(): void {
+    /**
+     * test_if_customfieldfilter_filters_the_records_sample2
+     * @return void
+     */
+    public function test_if_customfieldfilter_filters_the_records_sample2(): void {
         global $CFG, $DB, $_GET;
 
         $_GET = [];
@@ -285,6 +289,94 @@ final class customfieldfilter_test extends advanced_testcase {
     }
 
     /**
+     * Tests whether the custom field filter returns a generated WHERE condition
+     * with either the ILIKE (or LIKE in MySQL) or EQUAL operator.
+     *
+     * In this case, we just want to make sure that the following functions work properly.
+     * We don’t create a real environment.
+     * - use_operator_ilike()
+     * - use_operator_equal()
+     *
+     * @covers \local_wunderbyte_table\filters\types\customfieldfilter::use_operator_ilike
+     * @covers \local_wunderbyte_table\filters\types\customfieldfilter::use_operator_equal
+     *
+     * @dataProvider data_provider
+     *
+     * @param string $operator
+     * @return void
+     */
+    public function test_ilike_or_equal_where_condition(string $operator): void {
+        // Instantiate Wunderbyte table.
+        $table = new wunderbyte_table('test_table2');
+        $table->set_filter_sql('*', "", '1=1', '');
+
+        $customfieldfilter = new customfieldfilter('supervisor');
+        $subsql = "
+            userid IN (
+                SELECT userid
+                FROM {user_info_data} uid
+                JOIN {user_info_field} uif ON uid.fieldid = uif.id
+                WHERE uif.shortname = 'supervisor'
+                AND :where
+            )
+        ";
+        $customfieldfilter->set_sql($subsql, 'uid.data');
+
+        $coulmname = 'anything';
+        switch ($operator) {
+            case '=':
+                $customfieldfilter->use_operator_equal();
+                break;
+            case 'LIKE':
+            default:
+                $customfieldfilter->use_operator_ilike();
+        }
+        $table->add_filter($customfieldfilter);
+
+        $values = [1, 2, 3];
+        $filter = "";
+        $customfieldfilter->apply_filter($filter, $coulmname, $values, $table);
+        $this->assertStringContainsString($operator, $filter);
+    }
+
+    /**
+     * Test if dont_count_keys function sets the countkey to false.
+     * If yes, we expect to get our desired result from get_data_for_filter_options() function.
+     *
+     * @covers \local_wunderbyte_table\filters\types\customfieldfilter::dont_count_keys
+     * @covers \local_wunderbyte_table\filters\types\customfieldfilter::get_data_for_filter_options
+     *
+     * @return void
+     */
+    public function test_dont_count_keys_function(): void {
+        // Instantiate Wunderbyte table.
+        $table = new wunderbyte_table('test_table2');
+        $table->set_filter_sql('*', "", '1=1', '');
+        // Instantiate a customfieldfilter.
+        $filter = new customfieldfilter('something', 'something');
+        // Add options to this filter.
+        $options = [
+            '1' => 'option 1',
+            '2' => 'option 2',
+        ];
+        $filter->add_options($options);
+        // It's very important.
+        $filter->dont_count_keys();
+        $table->add_filter($filter);
+        // As we called dont_count_keys(), the property countkeys will be set to false.
+        // Based on the logic, we expect to get a result containing our injected options from this function.
+        $records = $filter->get_data_for_filter_options($table, 'something');
+        $this->assertNotEmpty($records);
+        $this->assertCount(count($options), $records);
+        foreach ($records as $record) {
+            $this->assertTrue(property_exists($record, 'something'));
+            $this->assertTrue(property_exists($record, 'keycount'));
+            $this->assertContains($record->something, array_keys($options));
+            $this->assertFalse($record->keycount);
+        }
+    }
+
+    /**
      * Creates a custom user profile field.
      *
      * @param string $shortname Field shortname (e.g. 'supervisor')
@@ -324,6 +416,20 @@ final class customfieldfilter_test extends advanced_testcase {
         $field->id = $DB->insert_record('user_info_field', $field);
     }
 
+    /**
+     * Data provider which providers string.
+     * @return array
+     */
+    public static function data_provider(): array {
+        return [
+            'ILIKE/LIKE' => [
+                'operator' => 'LIKE',
+            ],
+            '=' => [
+                'operator' => '=',
+            ],
+        ];
+    }
     protected function tearDown(): void {
         parent::tearDown();
         // Clean up globals after each test.

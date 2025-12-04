@@ -60,6 +60,16 @@ final class bookinghistory_test extends advanced_testcase {
     }
 
     /**
+     * Mandatory clean-up after each test.
+     */
+    public function tearDown(): void {
+        parent::tearDown();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = self::getDataGenerator()->get_plugin_generator('mod_booking');
+        $plugingenerator->teardown();
+    }
+
+    /**
      * Test booking, cancelation, option has started etc.
      *
      * @covers \mod_booking\bo_availability\conditions\bookitbutton::is_available
@@ -157,19 +167,25 @@ final class bookinghistory_test extends advanced_testcase {
         $this->assertCount(0, $historyrecords);
 
         // User Books Course or Waitinglist depending on the settings.
+        if ($settings->waitforconfirmation == 1) {
+            $result = booking_bookit::bookit('option', $settings->id, $student1->id);
+            [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, false);
+            // This time it is coming from MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION.
+            $this->assertEquals(MOD_BOOKING_BO_COND_CONFIRMASKFORCONFIRMATION, $id);
+        }
         $result = booking_bookit::bookit('option', $settings->id, $student1->id);
         [$id, $isavailable, $description] = $boinfo->is_available($settings->id, $student1->id, true);
         $this->assertEquals($expected['bookitresults'][0], $id);
 
-            // Needed for Booking without a Waitinglist.
+        // Needed for Booking without a Waitinglist.
         if ($settings->waitforconfirmation == 0) {
             $result = booking_bookit::bookit('option', $settings->id, $student1->id);
         }
 
-            $historyrecords = $DB->get_records('booking_history');
-            $this->assertCount(1, $historyrecords);
-            $status = reset($historyrecords)->status;
-            $this->assertEquals($expected['historystatus'][0], $status);
+        $historyrecords = $DB->get_records('booking_history');
+        $this->assertCount(1, $historyrecords);
+        $status = reset($historyrecords)->status;
+        $this->assertEquals($expected['historystatus'][0], $status);
 
         // Condition for Teacher cancelling.
         if (isset($data['additionalactions']['teachercancels'])) {
@@ -564,14 +580,5 @@ final class bookinghistory_test extends advanced_testcase {
             ],
         ],
         ];
-    }
-
-    /**
-     * Mandatory clean-up after each test.
-     */
-    public function tearDown(): void {
-        parent::tearDown();
-        // Mandatory clean-up.
-        singleton_service::destroy_instance();
     }
 }

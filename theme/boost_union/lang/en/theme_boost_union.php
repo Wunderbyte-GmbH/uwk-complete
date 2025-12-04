@@ -785,6 +785,7 @@ $string['footerheading'] = 'Footer';
 // ... ... Setting: Enable footer.
 $string['enablefooterbutton'] = 'Enable footer';
 $string['enablefooterbutton_desc'] = 'With "footer", the circle containing the question mark at the bottom of the page is meant.<br />Upon click, the user is presented with an overlay. Depending on the site configuration Moodle shows several links (like "Documentation for this page" or "Data retention summary") are shown in this overlay.<br />With this setting, you can control whether to show or to suppress the footer button at the bottom of the page.';
+$string['enablefooterbutton_note'] = 'Please note: The content of the <a href="{$a->url}">Moodle core setting additionalhtmlfooter</a> is shown within the footer by default. But if you select "Hide on all devices" here to hide the footer entirely, the additionalhtmlfooter content would not be shown anywhere anymore. To overcome this limitation, Boost Union will move the additionalhtmlfooter content to be shown at the very bottom of the page in this case.';
 $string['enablefooterbuttonboth'] = 'Enable on desktop, tablet and mobile';
 $string['enablefooterbuttondesktop'] = 'Enable on desktop and tablet only, hide on mobile (unchanged as presented by Moodle core)';
 $string['enablefooterbuttonmobile'] = 'Enable on mobile only, hide on desktop and tablet';
@@ -822,6 +823,7 @@ $string['footersuppressstandardfootercore_desc'] = 'With this setting, you can e
 // ... ... Setting: Suppress footer output by plugins.
 $string['footersuppressstandardfooter'] = 'Suppress footer output by plugin \'{$a}\'';
 $string['footersuppressstandardfooter_desc'] = 'With this setting, you can entirely suppress the footer output by plugin \'{$a}\'. Plugins (even if they are shipped with Moodle core, but are still technically plugins) can add additional content to the footer by implementing a particular hook or function. This plugin has implemented this hook / function and might add content to the footer in certain circumstances.<br />Please note: Due to the way how the suppressing feature is implemented, the setting might not take effect before the second page load after saving the setting.';
+$string['footersuppressstandardfooter_configoverride_desc'] = 'The footer output by plugin \'{$a}\' is already suppressed via <code>$CFG->hooks_callback_overrides</code> in your <code>config.php</code> file. To make this setting configurable here, you need to remove your override in <code>config.php</code> file.';
 
 // Settings: Static pages tab.
 $string['staticpagestab'] = 'Static pages';
@@ -1678,7 +1680,7 @@ $string['cachedef_flavours'] = 'Flavours which apply to a given page\'s category
 $string['cachedef_smartmenus'] = 'Smart menus';
 $string['cachedef_smartmenu_items'] = 'Smart menu items';
 $string['cachedef_touchiconsios'] = 'Touch icon files for iOS';
-$string['cachedef_hookoverrides'] = 'Hook overrides';
+$string['cachedef_hooksuppress'] = 'Hook suppressions';
 $string['cachedef_fontawesomeicons'] = 'FontAwesome icon map';
 
 // Scheduled tasks.
