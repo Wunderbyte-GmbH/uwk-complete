@@ -25,15 +25,14 @@
  */
 
 require_once(dirname(__FILE__)."/inc.php");
+require_once($CFG->libdir.'/datalib.php');
 
 global $DB, $OUTPUT, $PAGE, $USER;
 
 $courseid = required_param('courseid', PARAM_INT);
 $reminderid = optional_param('reminderid', 0, PARAM_INT);
 
-if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourse', 'block_simplehtml', $courseid);
-}
+$course=get_course($courseid);
 
 require_login($course);
 
@@ -56,7 +55,7 @@ $pagenode->make_active();
 
 /* CONTENT REGION */
 
-// Include form.php.
+// Include form.php .
 require_once('lib/reminder_form.php');
 
 if ($reminderid > 0) {
@@ -64,12 +63,6 @@ if ($reminderid > 0) {
     $toform->text = array("text" => $toform->text, "format" => 1);
     $toform->text_teacher = array("text" => $toform->text_teacher, "format" => 1);
     $toform->disable = ($toform->dateabsolute > 0 && $toform->dateabsolute < time()) ? 1 : 0;
-    // Criterias > 1000000 represent grade_items.
-    // So recalculate grade_item_id.
-    if ($toform->criteria > 1000000) {
-        $toform->grade_items = $toform->criteria - 1000000;
-        $toform->criteria = 250003;
-    }
 }
 // Instantiate form.
 $mform = new reminder_form($PAGE->url,
@@ -78,10 +71,12 @@ $mform = new reminder_form($PAGE->url,
 // Form processing and displaying is done here.
 if ($mform->is_cancelled()) {
     // Handle form cancel operation, if cancel button is present on form.
-    redirect("course_reminders.php?courseid=".$courseid);
-}
-
-if ($fromform = $mform->get_data()) {
+    $df = 1;
+    
+    // Go back to reminder overview
+    $url = new moodle_url('/blocks/dukreminder/course_reminders.php', array('courseid' => $PAGE->course->id));
+    redirect($url);
+} else if ($fromform = $mform->get_data()) {
     // In this case you process validated data. $mform->get_data() returns data posted in form.
     if ($fromform->id == 0) {
         // ... new entry.
@@ -98,11 +93,9 @@ if ($fromform = $mform->get_data()) {
         if (isset($fromform->to_groups)) {
             $fromform->to_groups = implode(";", $fromform->to_groups);
         };
-        // grade_item_ids are stored as criteras with numbers > 1000000.
-        if ($fromform->criteria == 250003) $fromform->criteria = 1000000 + $fromform->grade_items; // added by G. Schwed, 2016-01
+
         $DB->insert_record('block_dukreminder', $fromform);
     } else {
-        // ... update entry.
         $fromform->timemodified = time();
         $fromform->modifiedby = $USER->id;
         $fromform->text = $fromform->text['text'];
@@ -113,18 +106,16 @@ if ($fromform = $mform->get_data()) {
         if ($fromform->daterelative > 0) {
             $fromform->dateabsolute = 0;
         }
-        // grade_item_ids are stored as criteras with numbers > 1000000.
-        if ($fromform->criteria == 250003) $fromform->criteria = 1000000 + $fromform->grade_items; // added by G. Schwed, 2016-01
         $DB->update_record('block_dukreminder', $fromform);
     }
     redirect(new moodle_url("/blocks/dukreminder/course_reminders.php", array("courseid" => $courseid)));
 } else {
-    // This branch is executed if the form is submitted but the data doesn't validate and the form should be redisplayed.
-    // or on the first display of the form.
-
     // Build tab navigation & print header.
     echo $OUTPUT->header();
     echo $OUTPUT->tabtree(block_dukreminder_build_navigation_tabs($courseid), $pageidentifier);
+
+    // This branch is executed if the form is submitted but the data doesn't validate and the form should be redisplayed.
+    // or on the first display of the form.
 
     // Set default data (if any).
     if ($reminderid > 0) {

@@ -24,6 +24,8 @@
 
 namespace quizaccess_onesession;
 
+use core\event\base;
+
 /**
  * Class for event observers
  *
@@ -34,11 +36,11 @@ namespace quizaccess_onesession;
 class observers {
 
     /**
-     * Remove unneeded session information when when attempt finished, abandoned, overdue or deleted.
+     * Remove unneeded session information when attempt finished, abandoned, overdue or deleted.
      *
-     * @param \core\event\base $event
+     * @param base $event
      */
-    public static function unlock_attempt(\core\event\base $event) {
+    public static function unlock_attempt(base $event) {
         global $DB;
 
         $attemptid = $event->objectid;

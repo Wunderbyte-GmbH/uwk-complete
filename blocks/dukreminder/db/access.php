@@ -52,6 +52,7 @@ $capabilities = array(
         ),
 
         'block/dukreminder:use' => array(
+        		'riskbitmask'  => RISK_SPAM,
                 'captype' => 'write',
                 'contextlevel' => CONTEXT_COURSE,
                 'legacy' => array(

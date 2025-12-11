@@ -24,6 +24,10 @@
 
 namespace quizaccess_onesession\event;
 
+use coding_exception;
+use core\event\base;
+use moodle_url;
+
 /**
  * Attempt blocked event.
  *
@@ -31,7 +35,7 @@ namespace quizaccess_onesession\event;
  * @copyright  2016 Vadim Dvorovenko <Vadimon@mail.ru>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class attempt_blocked extends \core\event\base {
+class attempt_blocked extends base {
 
     /**
      * Init method.
@@ -64,27 +68,27 @@ class attempt_blocked extends \core\event\base {
     /**
      * Get URL related to the action
      *
-     * @return \moodle_url
+     * @return moodle_url
      */
     public function get_url() {
-        return new \moodle_url('/mod/quiz/review.php', ['attempt' => $this->objectid]);
+        return new moodle_url('/mod/quiz/review.php', ['attempt' => $this->objectid]);
     }
 
     /**
      * Custom validation.
      *
-     * @throws \coding_exception
+     * @throws coding_exception
      * @return void
      */
     protected function validate_data() {
         parent::validate_data();
 
         if (!isset($this->relateduserid)) {
-            throw new \coding_exception('The \'relateduserid\' must be set.');
+            throw new coding_exception('The \'relateduserid\' must be set.');
         }
 
         if (!isset($this->other['quizid'])) {
-            throw new \coding_exception('The \'quizid\' value must be set in other.');
+            throw new coding_exception('The \'quizid\' value must be set in other.');
         }
     }
 

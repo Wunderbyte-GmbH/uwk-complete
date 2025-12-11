@@ -4,10 +4,28 @@ moodle-atto_styles
 Changes
 -------
 
-### v4.1-r4
+### v4.5-r1
+
+* 2024-10-14 - Upgrade: Adopt changes from MDL-81920 and use new \core\lang_string class.
+* 2024-10-07 - Prepare compatibility for Moodle 4.5.
+
+### v4.4-r1
+
+* 2024-08-24 - Development: Rename master branch to main, please update your clones.
+* 2024-08-20 - Prepare compatibility for Moodle 4.4.
+
+### v4.3-r2
 
 * 2024-08-11 - Add section for scheduled tasks to README
 * 2024-08-11 - Updated Moodle Plugin CI to latest upstream recommendations
+
+### v4.3-r1
+
+* 2023-10-20 - Prepare compatibility for Moodle 4.3.
+
+### v4.2-r1
+
+* 2023-09-01 - Prepare compatibility for Moodle 4.2.
 
 ### v4.1-r3
 

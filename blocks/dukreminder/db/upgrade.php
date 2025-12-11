@@ -27,6 +27,7 @@
 /**
  * Dukreminder upgrade
  * @param integer $oldversion
+ * @return void
  */
 function xmldb_block_dukreminder_upgrade($oldversion) {
     global $DB, $CFG;
@@ -85,9 +86,10 @@ function xmldb_block_dukreminder_upgrade($oldversion) {
 
     if ($oldversion < 2014102800) {
 
-        $old_completion_entries = $DB->get_records_select('block_dukreminder','daterelative_completion > 0');
+        $oldcompletionentries = $DB->get_records_select('block_dukreminder', 'daterelative_completion > 0');
 
-        $old_enrol_entries = $DB->get_records_select('block_dukreminder','daterelative_completion = 0 OR daterelative_completion is NULL');
+        $oldenrolentries = $DB->get_records_select('block_dukreminder',
+            'daterelative_completion = 0 OR daterelative_completion is NULL');
 
         // Rename field criteria on table block_dukreminder to NEWNAMEGOESHERE.
         $table = new xmldb_table('block_dukreminder');
@@ -101,13 +103,13 @@ function xmldb_block_dukreminder_upgrade($oldversion) {
         // Launch change of default for field criteria.
         $dbman->change_field_default($table, $field);
 
-        foreach ($old_completion_entries as $old) {
+        foreach ($oldcompletionentries as $old) {
             $old->criteria = 250000;
             $old->daterelative = $old->daterelative_completion;
             $DB->update_record('block_dukreminder', $old);
         }
 
-        foreach ($old_enrol_entries as $old) {
+        foreach ($oldenrolentries as $old) {
             $old->criteria = 250001;
             $DB->update_record('block_dukreminder', $old);
         }
@@ -115,50 +117,4 @@ function xmldb_block_dukreminder_upgrade($oldversion) {
         // Dukreminder savepoint reached.
         upgrade_block_savepoint(true, 2014102800, 'dukreminder');
     }
-
-    if ($oldversion < 2015030102) {
-
-        // Define field timesent to be added to block_dukreminder_mailssent.
-        $table = new xmldb_table('block_dukreminder_mailssent');
-        $field = new xmldb_field('timesent', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'userid');
-
-        // Conditionally launch add field timesent.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        // Dukreminder savepoint reached.
-        upgrade_block_savepoint(true, 2015030102, 'dukreminder');
-    }
-
-   if ($oldversion < 2016010100) {
-
-        // Define field to_reportdirector to be added to block_dukreminder.
-        $table = new xmldb_table('block_dukreminder');
-        $field = new xmldb_field('to_reportdirector', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'to_reportsuperior');
-
-        // Conditionally launch add field to_reportdirector.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Dukreminder savepoint reached.
-        upgrade_block_savepoint(true, 2016010501, 'dukreminder');
-    }
-    
-   // if ($oldversion < 2018020100) {
-        
-        // Define field status to be added to block_dukreminder.
-        $table = new xmldb_table('block_dukreminder');
-        $field = new xmldb_field('status', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'criteria');
-        
-        // Conditionally launch add field status.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        
-        // Dukreminder savepoint reached.
-        upgrade_block_savepoint(true, 2018021203, 'dukreminder');
-    //}
-    return true;
 }
-

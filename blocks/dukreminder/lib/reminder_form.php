@@ -25,7 +25,8 @@
  */
 
 // Moodleform is defined in formslib.php.
-require_once("$CFG->libdir/formslib.php");
+require_once($CFG->libdir.'/formslib.php');
+require_once($CFG->libdir . '/completionlib.php');
 
 /**
  * Reminder form
@@ -35,7 +36,7 @@ require_once("$CFG->libdir/formslib.php");
 class reminder_form extends moodleform {
     /**
      * Add elements to form.
-     * @return nothing
+     * @return void
      */
     public function definition() {
         global $CFG, $COURSE, $DB;
@@ -73,10 +74,11 @@ class reminder_form extends moodleform {
         $placeholder = '<a href="#" onclick="insertTextAtCursor(\'###username###\');return false;">Username</a> ';
         $placeholder .= '<a href="#" onclick="insertTextAtCursor(\'###usermail###\');return false;">Usermail</a> ';
         $placeholder .= '<a href="#" onclick="insertTextAtCursor(\'###coursename###\');return false;">Kursname</a>';
+
         $placeholder = '###username### ###usermail### ###coursename###';
 
         $mform->addElement('html', html_writer::div(
-                html_writer::div(html_writer::tag('label', get_string('form_placeholder', 'block_dukreminder')), 'fitemtitle').
+                html_writer::div(html_writer::tag('label', get_string('form_placeholder','block_dukreminder')), 'fitemtitle').
                 html_writer::div($placeholder, 'felement ftext'), 'fitem'));
 
         // TEXT.
@@ -105,9 +107,7 @@ class reminder_form extends moodleform {
         $mform->disabledIf('daterelative', 'daterelative_completion[number]', 'neq', 0);
         $mform->addHelpButton('daterelative', 'form_daterelative', 'block_dukreminder');
 
-        // CRITERIAS
         $mform->addElement('header', 'nameforyourheaderelement', get_string('form_header_criteria', 'block_dukreminder'));
-
 
         // Get criteria for course.
         $courseid = required_param('courseid', PARAM_INT);
@@ -115,44 +115,32 @@ class reminder_form extends moodleform {
         $completion = new completion_info($course);
 
         $criteria = array();
-        $criteria[CRITERIA_ALL] = get_string('criteria_all', 'block_dukreminder');
-        $criteria[CRITERIA_ENROLMENT] = get_string('criteria_enrolment', 'block_dukreminder');
-        #$criteria[CRITERIA_ACTIVITY_GRADE] = get_string('criteria_activity_grade', 'block_dukreminder'); // deactivated by G. Schwed because seldom used
+        $criteria[BLOCK_DUKREMINDER_CRITERIA_ALL] = get_string('criteria_all', 'block_dukreminder');
+        $criteria[BLOCK_DUKREMINDER_CRITERIA_COMPLETION] = get_string('criteria_completion', 'block_dukreminder');
+        $criteria[BLOCK_DUKREMINDER_CRITERIA_ENROLMENT] = get_string('criteria_enrolment', 'block_dukreminder');
 
         if ($completion->has_criteria()) {
-            $criteria[CRITERIA_COMPLETION] = get_string('criteria_completion', 'block_dukreminder');
 
             // Get criteria and put in correct order.
+
             foreach ($completion->get_criteria(COMPLETION_CRITERIA_TYPE_ACTIVITY) as $id => $criterion) {
                 $criteria[$id] = $criterion->get_title_detailed();
+
+            }
+            foreach ($completion->get_criteria() as $id => $criterion) {
+                if (!in_array($criterion->criteriatype, array(
+                        COMPLETION_CRITERIA_TYPE_COURSE, COMPLETION_CRITERIA_TYPE_ACTIVITY))) {
+                    $criteria[$id] = $criterion->get_title_detailed();
+                }
             }
         }
 
         $mform->addElement('select', 'criteria', get_string('form_criteria', 'block_dukreminder'), $criteria);
         $mform->addHelpButton('criteria', 'form_criteria', 'block_dukreminder');
 
-        // Start MOD by G. Schwed
-        // Get grade items (for quiz and scorm)
-        /* deactivated by G. Schwed because seldom used
-        $grade_items = array();
-        $g_items = $DB->get_records_select('grade_items', 
-                        "courseid = $courseid 
-                        AND itemtype = 'mod' 
-                        AND itemmodule IN ('quiz', 'scorm')");
-        foreach ($g_items as $id => $g_item) {
-            $grade_items[$id] = $g_item->itemmodule . ": " . $g_item->itemname;
-        }
-
-        $mform->addElement('select', 'grade_items', get_string('form_grade_item', 'block_dukreminder'), $grade_items);
-        $mform->addHelpButton('grade_items', 'form_grade_item', 'block_dukreminder');
-        $mform->disabledIf('grade_items', 'criteria', 'neq', 250003);
-        */
-        // End MOD by G. Schwed
-
-
-        // TO_GROUPS.
         $mform->addElement('header', 'nameforyourheaderelement', get_string('form_header_groups', 'block_dukreminder'));
 
+        // TO_GROUPS.
         $groups = array();
         foreach (groups_get_course_data($COURSE->id)->groups as $group) {
             $groups[$group->id] = $group->name;
@@ -170,7 +158,7 @@ class reminder_form extends moodleform {
         $placeholder = '###coursename### ###users### ###usercount###';
 
         $mform->addElement('html', html_writer::div(
-                html_writer::div(html_writer::tag('label', get_string('form_placeholder', 'block_dukreminder')), 'fitemtitle').
+                html_writer::div(html_writer::tag('label', get_string('form_placeholder','block_dukreminder')), 'fitemtitle').
                 html_writer::div($placeholder, 'felement ftext'), 'fitem'));
 
         // TEXT.
@@ -181,22 +169,14 @@ class reminder_form extends moodleform {
                 'changeformat' => 0,
                 'context' => null,
                 'noclean' => 0)); // Add elements to your form.
-        #$mform->addRule('text_teacher', null, 'required', null, 'client'); // deactivated by G. Schwed
         $mform->addHelpButton('text_teacher', 'form_text_teacher', 'block_dukreminder');
 
         // TO_REPORTTRAINER.
-        $mform->addElement('advcheckbox', 'to_reporttrainer', get_string('form_to_reporttrainer', 'block_dukreminder'));
+        $mform->addElement('checkbox', 'to_reporttrainer', get_string('form_to_reporttrainer', 'block_dukreminder'));
         $mform->addHelpButton('to_reporttrainer', 'form_to_reporttrainer', 'block_dukreminder');
 
-    /*  // deactivated by G. Schwed for DUK
         // TO_REPORTSUPERIOR.
-        $mform->addElement('advcheckbox', 'to_reportsuperior', get_string('form_to_reportsuperior', 'block_dukreminder'));
-        $mform->addHelpButton('to_reportsuperior', 'form_to_reportsuperior', 'block_dukreminder');
-
-        // TO_REPORTDIRECTOR.
-        $mform->addElement('advcheckbox', 'to_reportdirector', get_string('form_to_reportdirector', 'block_dukreminder'));
-        $mform->addHelpButton('to_reportdirector', 'form_to_reportdirector', 'block_dukreminder');
-    */
+        $mform->addElement('checkbox', 'to_reportsuperior', get_string('form_to_reportsuperior', 'block_dukreminder'));
 
         // TO_MAIL.
         $mform->addElement('text', 'to_mail', get_string('form_to_mail', 'block_dukreminder'));
@@ -223,7 +203,7 @@ class reminder_form extends moodleform {
      * Validation
      * @param array $data
      * @param array $files
-     * @return nothing
+     * @return void
      */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
@@ -243,11 +223,11 @@ class reminder_form extends moodleform {
             }
         }
 
-        if ($data['daterelative'] == 0 && $data['criteria'] == CRITERIA_ENROLMENT) {
+        if ($data['daterelative'] == 0 && $data['criteria'] == BLOCK_DUKREMINDER_CRITERIA_ENROLMENT) {
             $errors['criteria'] = get_string('criteria_error', 'block_dukreminder');
         };
 
-        if ($data['daterelative'] > 0 && $data['criteria'] == CRITERIA_ALL) {
+        if ($data['daterelative'] > 0 && $data['criteria'] == BLOCK_DUKREMINDER_CRITERIA_ALL) {
             $errors['criteria'] = get_string('criteria_error2', 'block_dukreminder');
         }
 

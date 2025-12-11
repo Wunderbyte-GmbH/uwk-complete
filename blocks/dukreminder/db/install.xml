@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="blocks/dukreminder/db" VERSION="20160105" COMMENT="XMLDB file for Moodle blocks/dukreminder"
+<XMLDB PATH="blocks/dukreminder/db" VERSION="20141028" COMMENT="XMLDB file for Moodle blocks/dukreminder"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -9,7 +9,6 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="title" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="only for internal useage"/>
         <FIELD NAME="subject" TYPE="char" LENGTH="400" NOTNULL="true" SEQUENCE="false" COMMENT="reminder subject"/>
-        <FIELD NAME="status" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="0 is active, 1 is paused"/>
         <FIELD NAME="text" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="reminder text"/>
         <FIELD NAME="dateabsolute" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="absolute timestamp for sending the reminders"/>
         <FIELD NAME="daterelative" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="date for sending reminders, relative to enrollment date"/>
@@ -22,7 +21,6 @@
         <FIELD NAME="to_status" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false" COMMENT="0 = alle, 1 = mit abschluss, 2 = ohne abschluss"/>
         <FIELD NAME="to_reporttrainer" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="to_reportsuperior" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="to_reportdirector" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="to_groups" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="to_mail" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="sent" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="0 = not yet sent, 1 = already sent"/>
@@ -38,7 +36,6 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="reminderid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="id of the dukreminder"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -26,6 +26,7 @@
 $string['accessdenied'] = 'Access denied';
 $string['alwaysopen'] = 'Always open';
 $string['blankentry'] = 'Blank entry';
+$string['completiondetail:completion_create_entry'] = 'Create a journal entry';
 $string['couldnotupdatejournal'] = 'Could not update your journal';
 $string['countnotinsertjournalentry'] = 'Could not insert a new journal entry';
 $string['crontask'] = 'Background processing for journal module';
@@ -33,6 +34,10 @@ $string['dateasc'] = 'Date Ascending';
 $string['datedesc'] = 'Date Descending';
 $string['daysavailable'] = 'Days available';
 $string['deadline'] = 'Days Open';
+$string['defaultgrade'] = 'Default entry grade';
+$string['defaultgrade_help'] = 'The default maximum grade for new Journal entries.
+* Enter **100** (or any positive number) to default to Point grading.
+* Enter **0** to default to "No grade" (useful for formative activities).';
 $string['editingended'] = 'Editing period has ended';
 $string['editingends'] = 'Editing period ends';
 $string['entries'] = 'Entries';
@@ -59,18 +64,39 @@ $string['incorrectuserid'] = 'Selected user ID is incorrect';
 $string['journal:addentries'] = 'Add journal entries';
 $string['journal:addinstance'] = 'Add a new journal';
 $string['journal:manageentries'] = 'Manage journal entries';
-$string['journalmail'] = '{$a->teacher} has posted some feedback on your
-journal entry for \'{$a->journal}\'
-You can see it appended to your journal entry:
+
+// Updated Plain Text Template
+$string['journalmail'] = 'Hi {$a->student},
+
+{$a->teacher} has posted feedback on your journal entry for \'{$a->journal}\'.
+
+Course: {$a->course_name}
+Journal: {$a->journal}
+Date: {$a->date}
+
+You can view the feedback here:
     {$a->url}';
-$string['journalmailhtml'] = '{$a->teacher} has posted some feedback on your
-journal entry for \'<i>{$a->journal}</i>\'<br /><br />
-You can see it appended to your <a href="{$a->url}">journal entry</a>.';
+$string['journalmailhtml'] = '<p>Hi {$a->student},</p>
+<p>{$a->teacher} has posted feedback on your journal entry for \'<strong>{$a->journal}</strong>\'.</p>
+<p>
+    <strong>Course:</strong> {$a->course_name}<br />
+    <strong>Journal:</strong> {$a->journal}<br />
+    <strong>Date:</strong> {$a->date}
+</p>
+<p>You can view the feedback <a href="{$a->url}">here</a>.</p>';
 $string['journalname'] = 'Journal name';
 $string['journalquestion'] = 'Journal question';
 $string['lastnameasc'] = 'Lastname Ascending';
 $string['lastnamedesc'] = 'Lastname Descending';
+$string['mailbody'] = '{$a->username} has updated the journal entry for \'{$a->journalname}\'
+
+You can view the entry here:
+    {$a->url}';
+$string['mailbodyhtml'] = '{$a->username} has updated the journal entry for \'<i>{$a->journalname}</i>\'<br /><br />
+You can view the <a href="{$a->url}">journal entry here</a>.';
 $string['mailsubject'] = 'Journal feedback';
+$string['messageprovider:submission'] = 'Journal entry created or modified';
+$string['messageprovider:journal_feedback'] = 'Journal feedback from teacher';
 $string['modulename'] = 'Journal';
 $string['modulename_help'] = 'The journal activity enables teachers to obtain students feedback
  about a specific topic';
@@ -85,6 +111,11 @@ $string['noentry'] = 'No entry';
 $string['noratinggiven'] = 'No rating given';
 $string['notopenuntil'] = 'This journal won\'t be open until';
 $string['notstarted'] = 'You have not started this journal yet';
+$string['notifystudents'] = 'Notify students';
+$string['notifystudents_help'] = 'If enabled, students will receive a notification via Moodle messaging when a teacher provides feedback on a journal entry.';
+$string['notifyteachers'] = 'Notify teachers';
+$string['notifyteachers_help'] = 'If enabled, teachers will receive a notification via Moodle messaging when a student creates or updates a journal entry.';
+$string['numchars'] = '{$a} characters';
 $string['overallrating'] = 'Overall rating';
 $string['pluginadministration'] = 'Journal module administration';
 $string['pluginname'] = 'Journal';

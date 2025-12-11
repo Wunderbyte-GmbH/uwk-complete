@@ -3,7 +3,7 @@
 
 Requirements
 ------------
-- Moodle 2.7 (build 2014051200) or later.
+- Moodle 4.2 (build 2023042400) or later.
 
 Installation
 ------------
@@ -30,6 +30,14 @@ student to continue the quiz attempt on another device.
 Any attempts to continue a quiz from another device are logged, so teacher can see the log 
 to determine if someone tried to cheat.
 
+Upgrade from 1.x
+----------------
+Due to changes in the hashing algorithm, when upgrading from version 1.x, all quiz sessions
+will be unlocked. This is to ensure that students can safely continue testing immediately
+after the update. There is a small risk that someone will use the update to cheat a quiz
+that was started before the update. If this worries you, limit the time of the quizes so 
+that all attempts complete before the update begins.
+
 Author
 ------
 - Vadim Dvorovenko (Vadimon@mail.ru)
@@ -55,3 +63,10 @@ Release 1.2 (build 2021010301):
 
 Release 1.2.1 (build 2022020600):
 - String fixes. Thanks to Luca Bösch.
+
+Release 2.0.0 (build 2024010802):
+- Removed support for versions prior to 4.2.
+- Changed hash algorithm from md5 to sha256 with random salt.  
+
+Release 2.0.1 (build 2024010802):
+- Changed unlock block title   

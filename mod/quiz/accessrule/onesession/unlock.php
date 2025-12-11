@@ -22,13 +22,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_quiz\quiz_attempt;
+use quizaccess_onesession\event\attempt_unlocked;
+
 require_once('../../../../config.php');
 
 require_login();
 require_sesskey();
 
-require_once("$CFG->dirroot/mod/quiz/attemptlib.php");
-require_once("$CFG->dirroot/mod/quiz/accessmanager.php");
 $attemptid = required_param('attempt', PARAM_INT);
 $attemptobj = quiz_attempt::create($attemptid);
 $context = $attemptobj->get_quizobj()->get_context();
@@ -45,7 +46,7 @@ $params = [
         'quizid' => $attemptobj->get_quizid(),
     ],
 ];
-$event = \quizaccess_onesession\event\attempt_unlocked::create($params);
+$event = attempt_unlocked::create($params);
 $event->trigger();
 
 $url = $attemptobj->get_quizobj()->review_url($attemptid);

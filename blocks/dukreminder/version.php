@@ -26,9 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018021203;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2012112900;        // Requires this Moodle version
+$plugin->version   = 2025121100;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires  = 2024100100;        // Requires Moodle 3.9
 $plugin->component = 'block_dukreminder'; // Full name of the plugin (used for diagnostics)
-$plugin->cron = 3600;                  // Run dukreminder only once per hour
-$plugin->release = 'v1.0';             // This is our first release for Moodle 2.7.x branch.
+$plugin->release = 'v1.1';             // This is our first release
 $plugin->maturity = MATURITY_STABLE;
