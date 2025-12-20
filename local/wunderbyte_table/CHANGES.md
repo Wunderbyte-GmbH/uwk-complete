@@ -1,3 +1,23 @@
+## Version 3.0.4 (2025121700)
+* Improvement: Hierarchical filters work with custom fields when they are not joined to the main table.
+* Improvement: FALLBACK: If argument 'urlparamforuserid' is not set, we still try to use 'userid' parameter from URL.
+* Bugfix: Filterview Shortcode Moodle 5 Fix.
+* Test: Add a new PHPUnit test case to verify that the hierarchical filter works on custom fields without joining them in the main query.
+
+## Version 3.0.3 (2025121001)
+* Improvement: Set the default value of the hideallfiltershavingbypasscache setting to 1.
+
+## Version 3.0.2 (2025121000)
+* Improvement: Make sure the encoded table is from the right class. Throw error if not.
+* Improvement: New possibility to store customfields info array in table class.
+* Improvement: Various adjustments for Bootstrap 5 compatibility.
+* Bugfix: Re-index the array that holds the filters after removing some filters.
+* Tests: New PHPUnit test to cover more methods in customfieldfilter class.
+* Tests: New PHPUnit test to cover get_data_for_filter_options method of class customfieldfilter.
+
+## Version 3.0.0 (2025120101)
+* Improvement: Now supporting Moodle 4.5+ (skipped support for Moodle 4.1 - 4.4).
+
 ## Version 2.0.63 (2025120100)
 * Improvement: Add a new property ($bypasscache) to filters to prevent caching when any filter has this property set to true.
 * Improvement: Add property to determine whether to count keys of each option in custom field filter.

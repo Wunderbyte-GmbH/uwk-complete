@@ -16,8 +16,6 @@
 
 namespace mod_journal;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\message\message;
 
 /**
@@ -62,7 +60,9 @@ class event_observer {
             $userfields = get_all_user_name_fields(true, 'u');
         }
 
-        $teachers = get_users_by_capability($context, 'mod/journal:manageentries', 'u.id, u.email, u.lang, ' . $userfields);
+        // Changed from get_users_by_capability to get_enrolled_users to prevent site admins
+        // receiving notifications unless they are explicitly enrolled in the course.
+        $teachers = get_enrolled_users($context, 'mod/journal:manageentries', 0, 'u.id, u.email, u.lang, ' . $userfields);
 
         if (empty($teachers)) {
             return;

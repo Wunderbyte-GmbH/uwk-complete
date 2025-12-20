@@ -34,6 +34,11 @@ function journal_add_instance($journal) {
     global $DB;
 
     $journal->timemodified = time();
+
+    // Checkbox handling: Use !empty to ensure 0 is saved as 0.
+    $journal->notifyteachers = !empty($journal->notifyteachers) ? 1 : 0;
+    $journal->notifystudents = !empty($journal->notifystudents) ? 1 : 0;
+
     $journal->id = $DB->insert_record('journal', $journal);
 
     journal_grade_item_update($journal);
@@ -61,6 +66,10 @@ function journal_update_instance($journal) {
 
     $journal->timemodified = time();
     $journal->id = $journal->instance;
+
+    // Checkbox handling: Use !empty to ensure 0 is saved as 0.
+    $journal->notifyteachers = !empty($journal->notifyteachers) ? 1 : 0;
+    $journal->notifystudents = !empty($journal->notifystudents) ? 1 : 0;
 
     $result = $DB->update_record('journal', $journal);
 
@@ -880,9 +889,10 @@ function journal_print_user_entry($course, $user, $entry, $teachers, $grades, $c
     $context = context_module::instance($cmid);
 
     $entryid = 'entry-' . $user->id;
+    // PR Change: Added 'table-reboot' class for Moodle 5.0 compatibility.
+    // Also kept 'journaluserentry' for specific styling.
     $content = html_writer::start_div('journaluserentrywrapper');
-    // Use both classes to support Bootstrap 4 (Moodle 3.9) and Bootstrap 5 (Moodle 4.0+).
-    $content .= html_writer::start_tag('table', ['class' => 'journaluserentry mb-1 m-b-1', 'id' => $entryid]);
+    $content .= html_writer::start_tag('table', ['class' => 'journaluserentry table-reboot mb-1', 'id' => $entryid]);
 
     // User picture and fullname row.
     $content .= html_writer::start_tag('tr');
@@ -1131,7 +1141,7 @@ function journal_print_feedback($course, $entry, $grades) {
     $cmid = $DB->get_field('course_modules', 'id', ['module' => $module->id, 'instance' => $entry->journal]);
     $context = \context_module::instance($cmid);
 
-    echo '<table class="feedbackbox">';
+    echo '<table class="feedbackbox table table-reboot">';
 
     echo '<tr>';
     echo '<td class="left picture">';
@@ -1373,14 +1383,18 @@ function mod_journal_sort_users(array &$users, $sortby, array $entrybyuser) {
 function journal_get_coursemodule_info($cm): ?cached_cm_info {
     global $DB;
 
-    // We only need the completion flag from the journal table.
-    // Note: We MUST include 'id' in fields to get a proper record object.
-    if (!$journal = $DB->get_record('journal', ['id' => $cm->instance], 'id, name, completion_create_entry')) {
+    // Fetch necessary fields including intro/format for description display.
+    if (!$journal = $DB->get_record('journal', ['id' => $cm->instance], 'id, name, intro, introformat, completion_create_entry')) {
         return null;
     }
 
     $result = new cached_cm_info();
     $result->name = $journal->name;
+
+    if ($cm->showdescription) {
+        // Convert intro to html. Do not filter yet.
+        $result->content = format_module_intro('journal', $journal, $cm->id, false);
+    }
 
     if ($cm->completion == COMPLETION_TRACKING_AUTOMATIC) {
         $result->customdata['customcompletionrules']['completion_create_entry'] = $journal->completion_create_entry;
