@@ -17,7 +17,7 @@
 /**
  * Version information for plugin gradingform_dukrub
  * Based on rubrics
- * 
+ *
  * @package    gradingform_dukrub
  * @copyright  2018 michael pollak <moodle@michaelpollak.org>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,8 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component  = 'gradingform_dukrub';
-$plugin->version    = 2018050702;
-
-$plugin->requires   = 2015110800; // mod. by G. Schwed
-
+$plugin->version    = 2026010100;
+$plugin->requires   = 2024100700;
 $plugin->maturity   = MATURITY_STABLE;

@@ -92,13 +92,13 @@ class gradingform_dukrub_controller extends gradingform_controller {
     /**
      * Saves the dukrub definition into the database
      *
-     * @see parent::update_definition()
-     * @param stdClass $newdefinition dukrub definition data as coming from gradingform_dukrub_editdukrub::get_data()
+     * @param stdClass $definition dukrub definition data as coming from gradingform_dukrub_editdukrub::get_data()
      * @param int|null $usermodified optional userid of the author of the definition, defaults to the current user
+     *@see parent::update_definition()
      */
-    public function update_definition(stdClass $newdefinition, $usermodified = null) {
-        $this->update_or_check_dukrub($newdefinition, $usermodified, true);
-        if (isset($newdefinition->dukrub['regrade']) && $newdefinition->dukrub['regrade']) {
+    public function update_definition(stdClass $definition, $usermodified = null) {
+        $this->update_or_check_dukrub($definition, $usermodified, true);
+        if (isset($definition->dukrub['regrade']) && $definition->dukrub['regrade']) {
             $this->mark_for_regrade();
         }
     }
@@ -379,14 +379,14 @@ class gradingform_dukrub_controller extends gradingform_controller {
      *
      * @return array
      */
-    public function get_options() {
+    public function get_options(): array {
         $options = self::get_default_options();
         if (!empty($this->definition->options)) {
             $thisoptions = json_decode($this->definition->options);
             foreach ($thisoptions as $option => $value) {
                 $options[$option] = $value;
             }
-            if (!array_key_exists('lockzeropoints', $thisoptions)) {
+            if (!array_key_exists('lockzeropoints', $options)) {
                 // Dukrubs created before Moodle 3.2 don't have 'lockzeropoints' option. In this case they should not
                 // assume default value 1 but use "legacy" value 0.
                 $options['lockzeropoints'] = 0;
@@ -464,13 +464,13 @@ class gradingform_dukrub_controller extends gradingform_controller {
      * @param object $context
      * @return array options for the form description field
      */
-    public static function description_form_field_options($context) {
+    public static function description_form_field_options($context): array {
         global $CFG;
-        return array(
+        return [
             'maxfiles' => -1,
             'maxbytes' => get_user_max_upload_file_size($context, $CFG->maxbytes),
             'context'  => $context,
-        );
+        ];
     }
 
     /**
@@ -709,7 +709,7 @@ class gradingform_dukrub_controller extends gradingform_controller {
      * Returns an array that defines the structure of the dukrub's filling. This function is used by
      * the web service function core_grading_external::get_gradingform_instances().
      *
-     * @return An array containing a single key/value pair with the 'criteria' external_multiple_structure
+     * @return array containing a single key/value pair with the 'criteria' external_multiple_structure
      * @see gradingform_controller::get_external_instance_filling_details()
      * @since Moodle 2.6
      */
@@ -813,13 +813,13 @@ class gradingform_dukrub_instance extends gradingform_instance {
      */
     public function validate_grading_element($elementvalue) {
         $criteria = $this->get_controller()->get_definition()->dukrub_criteria;
-        
+
         if (!isset($elementvalue['criteria']) || !is_array($elementvalue['criteria']) || sizeof($elementvalue['criteria']) < sizeof($criteria)) {
             return false;
         }
 
         foreach ($criteria as $id => $criterion) {
-            
+
             $levelid = $elementvalue['criteria'][$id]['levelid'];
             if (!isset($levelid) || !array_key_exists($levelid, $criterion['levels'])) return false;
 
@@ -853,7 +853,7 @@ class gradingform_dukrub_instance extends gradingform_instance {
     public function validate_leveloverwrite($elementvalue) {
         $criteria = $this->get_controller()->get_definition()->dukrub_criteria;
         foreach ($criteria as $id => $criterion) {
-            
+
             $levelid = $elementvalue['criteria'][$id]['levelid'];
             if (!isset($levelid) || !array_key_exists($levelid, $criterion['levels'])) return false;
 
@@ -873,15 +873,15 @@ class gradingform_dukrub_instance extends gradingform_instance {
         }
         return true;
     }
-    
-    
+
+
     /**
      * Retrieves from DB and returns the data how this dukrub was filled
      *
      * @param boolean $force whether to force DB query even if the data is cached
      * @return array
      */
-    public function get_dukrub_filling($force = false) {
+    public function get_dukrub_filling(bool $force = false): array {
         global $DB;
         if ($this->dukrub === null || $force) {
             $records = $DB->get_records('gradingform_dukrub_fillings', array('instanceid' => $this->get_id()));
@@ -907,20 +907,20 @@ class gradingform_dukrub_instance extends gradingform_instance {
         foreach ($data['criteria'] as $criterionid => $record) {
 
             if (!array_key_exists($criterionid, $currentgrade['criteria'])) {
-				
+
                 $newrecord = array('instanceid' => $this->get_id(), 'criterionid' => $criterionid,
                     'levelid' => $record['levelid'], 'remarkformat' => FORMAT_MOODLE);
                 if (isset($record['remark'])) {
                     $newrecord['remark'] = $record['remark'];
                 }
-                
+
                 // DUKrub always safes leveloverwrites, even if default values are picked.
                 $newrecord['leveloverwrite'] = $record['leveloverwrite'][$record['levelid']];
-                    
+
                 $DB->insert_record('gradingform_dukrub_fillings', $newrecord);
             } else {
                 $newrecord = array('id' => $currentgrade['criteria'][$criterionid]['id']);
-                
+
                 foreach (array('levelid', 'remark'/*, 'remarkformat' */) as $key) {
                     // TODO MDL-31235 format is not supported yet
                     if (isset($record[$key]) && $currentgrade['criteria'][$criterionid][$key] != $record[$key]) {
@@ -930,7 +930,7 @@ class gradingform_dukrub_instance extends gradingform_instance {
 
                 // DUKrub always safes leveloverwrites, even if default values are picked.
                 $newrecord['leveloverwrite'] = $record['leveloverwrite'][$record['levelid']];
-                
+
                 if (count($newrecord) > 1) {
                     $DB->update_record('gradingform_dukrub_fillings', $newrecord);
                 }
@@ -1012,6 +1012,7 @@ class gradingform_dukrub_instance extends gradingform_instance {
         if ($value === null) {
             $value = $this->get_dukrub_filling(); // We get fillings from db
         } else {
+            // TODO: The validation does not make sense as $value is always a string thus validation is going to file - array expected.
             if (!$this->validate_grading_element($value)) {
                 $html .= html_writer::tag('div', get_string('dukrubnotcompleted', 'gradingform_dukrub'), array('class' => 'gradingform_dukrub-error'));
             }
@@ -1020,7 +1021,7 @@ class gradingform_dukrub_instance extends gradingform_instance {
                 $html .= html_writer::tag('div', get_string('dukrubfailedleveloverwrite', 'gradingform_dukrub'), array('class' => 'gradingform_dukrub-error'));
             }
         }
-        
+
 
         $currentinstance = $this->get_current_instance();
         if ($currentinstance && $currentinstance->get_status() == gradingform_instance::INSTANCE_STATUS_NEEDUPDATE) {

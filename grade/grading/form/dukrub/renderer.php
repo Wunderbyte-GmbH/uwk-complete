@@ -58,7 +58,7 @@ class gradingform_dukrub_renderer extends plugin_renderer_base {
      */
     public function criterion_template($mode, $options, $elementname = '{NAME}', $criterion = null, $levelsstr = '{LEVELS}', $value = null) {
         // TODO MDL-31235 description format, remark format
-        if ($criterion === null || !is_array($criterion) || !array_key_exists('id', $criterion)) {
+        if (!is_array($criterion) || !array_key_exists('id', $criterion)) {
             $criterion = array('id' => '{CRITERION-id}', 'description' => '{CRITERION-description}', 'sortorder' => '{CRITERION-sortorder}', 'class' => '{CRITERION-class}');
         } else {
             foreach (array('sortorder', 'description', 'class') as $key) {
@@ -258,7 +258,7 @@ class gradingform_dukrub_renderer extends plugin_renderer_base {
             $definition = s($level['definition']);
             $score = $level['score'];
         }
-        if ($mode == gradingform_dukrub_controller::DISPLAY_EVAL) { 
+        if ($mode == gradingform_dukrub_controller::DISPLAY_EVAL) {
             $levelradioparams = array(
                 'type' => 'radio',
                 'id' => '{NAME}-criteria-{CRITERION-id}-levels-{LEVEL-id}-definition',
@@ -341,10 +341,10 @@ class gradingform_dukrub_renderer extends plugin_renderer_base {
             $button = html_writer::empty_tag('input', $buttonparams);
             $leveltemplate .= html_writer::tag('div', $button, array('class' => 'delete'));
         }
-        
+
         // DUKrub leveloverwrite inputform
         if ($mode == gradingform_dukrub_controller::DISPLAY_EVAL) {
-            
+
             // Check for existing overwrite.
 			if ($level['checked'] && !is_array($level['leveloverwrite'])) $value = (float)$level['leveloverwrite'];
             else $value = $level['score'];
@@ -358,8 +358,8 @@ class gradingform_dukrub_renderer extends plugin_renderer_base {
             );
             $leveltemplate .= html_writer::empty_tag('input', $params);
         }
-        
-        
+
+
 
 
 
@@ -553,7 +553,7 @@ class gradingform_dukrub_renderer extends plugin_renderer_base {
                 // DUKrub
                 // We have to pick up the leveloverride for already selected levels.
                 if ($level['checked'] && is_array($criterionvalue['leveloverwrite'])) {
-                   // When validation failed [leveloverwrite] => Array ( [1] => 0 [2] => 50 [3] => 100 ) 
+                   // When validation failed [leveloverwrite] => Array ( [1] => 0 [2] => 50 [3] => 100 )
                    $level['leveloverwrite'] = $criterionvalue['leveloverwrite'][$levelid];
                 } else if ($level['checked'] && !is_array($criterionvalue['leveloverwrite'])) {
                     // When validation succeeded  [leveloverwrite] => 50

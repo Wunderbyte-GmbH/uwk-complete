@@ -212,7 +212,7 @@ class MoodleQuickForm_dukrubeditor extends HTML_QuickForm_input {
                     $criterion['levels']['NEWID'.($i++)]['score'] = 0;
                 }
                 // add more levels so there are at least 3 in the new criterion. Increment by 1 the score for each next one
-                for ($i=$i; $i<3; $i++) {
+                for ($i=0; $i<3; $i++) {
                     $criterion['levels']['NEWID'.$i]['score'] = $criterion['levels']['NEWID'.($i-1)]['score'] + 1;
                 }
                 // set other necessary fields (definition) for the levels in the new criterion
