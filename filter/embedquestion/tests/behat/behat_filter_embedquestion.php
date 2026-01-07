@@ -29,6 +29,7 @@ use Behat\Gherkin\Node\TableNode;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_filter_embedquestion extends behat_base {
+
     /**
      * Convert page names to URLs for steps like 'When I am on the "[page name]" page'.
      *
@@ -59,18 +60,12 @@ class behat_filter_embedquestion extends behat_base {
      * @return moodle_url the corresponding URL.
      * @throws Exception with a meaningful error message if the specified page cannot be found.
      */
-    protected function resolve_page_instance_url(
-        string $type,
-        string $identifier
-    ): moodle_url {
+    protected function resolve_page_instance_url(string $type, string $identifier): moodle_url {
         switch (strtolower($type)) {
             case 'test':
-                return new moodle_url(
-                    '/filter/embedquestion/testhelper.php',
-                    [
-                        'courseid' => $this->get_course_id($identifier),
-                    ]
-                );
+                return new moodle_url('/filter/embedquestion/testhelper.php',
+                        ['courseid' => $this->get_course_id($identifier)]);
+
             default:
                 throw new Exception('Unrecognised quiz page type "' . $type . '."');
         }
@@ -107,12 +102,7 @@ class behat_filter_embedquestion extends behat_base {
      * @param string $contextref either course name or activity idnumber.
      * @param TableNode $attemptinfo information about the questions to add, as above.
      */
-    public function user_has_attempted_with_responses(
-        $username,
-        $contextlevel,
-        $contextref,
-        TableNode $attemptinfo
-    ) {
+    public function user_has_attempted_with_responses($username, $contextlevel, $contextref, TableNode $attemptinfo) {
         global $DB;
 
         /** @var filter_embedquestion_generator $generator */
@@ -160,14 +150,8 @@ class behat_filter_embedquestion extends behat_base {
             $attemptcontext = $data['context'];
             $user = $data['user'];
             foreach ($data['slots'] as $slot) {
-                $generator->create_attempt_at_embedded_question(
-                    $slot['question'],
-                    $user,
-                    $slot['response'],
-                    $attemptcontext,
-                    $pagename,
-                    $slot['no']
-                );
+                $generator->create_attempt_at_embedded_question($slot['question'], $user, $slot['response'], $attemptcontext,
+                        $pagename, $slot['no']);
             }
         }
     }
@@ -182,18 +166,9 @@ class behat_filter_embedquestion extends behat_base {
      * @param string $contextlevel 'course' or 'activity'.
      * @param string $contextref either course name or activity idnumber.
      */
-    public function user_has_start_embedded_question(
-        string $username,
-        string $questioninfo,
-        string $contextlevel,
-        string $contextref
-    ) {
-        $this->create_inprogress_attempt_for_embedded_question(
-            $username,
-            $questioninfo,
-            $contextlevel,
-            $contextref
-        );
+    public function user_has_start_embedded_question(string $username, string $questioninfo,
+            string $contextlevel, string $contextref) {
+        $this->create_inprogress_attempt_for_embedded_question($username, $questioninfo, $contextlevel, $contextref);
     }
 
     /**
@@ -207,20 +182,9 @@ class behat_filter_embedquestion extends behat_base {
      * @param string $contextref either course name or activity idnumber.
      * @param string $slot slot no
      */
-    public function user_has_start_embedded_question_with_slot(
-        string $username,
-        string $questioninfo,
-        string $contextlevel,
-        string $contextref,
-        string $slot
-    ) {
-        $this->create_inprogress_attempt_for_embedded_question(
-            $username,
-            $questioninfo,
-            $contextlevel,
-            $contextref,
-            $slot
-        );
+    public function user_has_start_embedded_question_with_slot(string $username, string $questioninfo,
+            string $contextlevel, string $contextref, string $slot) {
+        $this->create_inprogress_attempt_for_embedded_question($username, $questioninfo, $contextlevel, $contextref, $slot);
     }
 
     /**
@@ -232,13 +196,8 @@ class behat_filter_embedquestion extends behat_base {
      * @param string $contextref either course name or activity idnumber.
      * @param int $slot Slot not
      */
-    public function create_inprogress_attempt_for_embedded_question(
-        string $username,
-        string $questioninfo,
-        string $contextlevel,
-        string $contextref,
-        int $slot = 1
-    ) {
+    public function create_inprogress_attempt_for_embedded_question(string $username, string $questioninfo,
+            string $contextlevel, string $contextref, int $slot = 1) {
         global $DB;
 
         /** @var filter_embedquestion_generator $generator */
@@ -258,10 +217,7 @@ class behat_filter_embedquestion extends behat_base {
      * @param string $contextref Context reference
      * @return bool|context|context_course|context_module
      */
-    private function get_attempt_context(
-        string $contextlevel,
-        string $contextref
-    ) {
+    private function get_attempt_context(string $contextlevel, string $contextref) {
         global $DB;
 
         switch ($contextlevel) {

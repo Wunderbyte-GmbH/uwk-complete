@@ -31,6 +31,7 @@ use renderer_base;
  * Get the switch question bank rendered content. Displays lists of shared banks the viewing user has access to.
  */
 class switch_question_bank implements \renderable, \templatable {
+
     /**
      * Instantiate the output class.
      *

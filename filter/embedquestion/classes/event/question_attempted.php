@@ -28,6 +28,7 @@ namespace filter_embedquestion\event;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_attempted extends \core\event\base {
+
     #[\Override]
     protected function init() {
         $this->data['objecttable'] = 'question';

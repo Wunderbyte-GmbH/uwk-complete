@@ -24,6 +24,7 @@ namespace filter_embedquestion;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class token {
+
     /**
      * Compute the security token used to validate the embedding code.
      *
