@@ -106,10 +106,6 @@
 	path = blocks/quickmail
 	url = https://github.com/catalyst/lsuce-block_quickmail.git
 	branch = catalyst-master
-[submodule "blocks/ranking"]
-	path = blocks/ranking
-	url = https://github.com/willianmano/moodle-block_ranking.git
-	branch = master
 [submodule "blocks/xp"]
 	path = blocks/xp
 	url = https://github.com/FMCorz/moodle-block_xp.git
@@ -276,8 +272,8 @@
 	branch = master
 [submodule "filter/embedquestion"]
 	path = filter/embedquestion
-	url = https://github.com/moodleou/moodle-filter_embedquestion.git
-	branch = main
+	url = https://github.com/Wunderbyte-GmbH/moodle-filter_embedquestion.git
+	branch = MOODLE_405_STABLE
 [submodule "mod/mindmap"]
 	path = mod/mindmap
 	url = https://github.com/t6nis/moodle-mod_mindmap.git
@@ -329,6 +325,7 @@
 [submodule "grade/grading/form/dukrub"]
 	path = grade/grading/form/dukrub
 	url = https://github.com/Wunderbyte-GmbH/moodle-gradingform_dukrub.git
+	branch = MOODLE_405_STABLE
 [submodule "mod/quiz/accessrule/proctoring"]
 	path = mod/quiz/accessrule/proctoring
 	url = https://github.com/Wunderbyte-GmbH/moodle-quizaccess_proctoring.git
