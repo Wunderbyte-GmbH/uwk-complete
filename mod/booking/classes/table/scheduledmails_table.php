@@ -129,6 +129,10 @@ class scheduledmails_table extends wunderbyte_table {
      * @return string
      */
     public function col_cmid(stdClass $values): string {
+
+        if (empty($values->cmid)) {
+            return '';
+        }
         $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($values->cmid);
 
         $url = new \moodle_url(
@@ -151,7 +155,7 @@ class scheduledmails_table extends wunderbyte_table {
     public function col_message(stdClass $values): string {
         global $PAGE;
 
-        $plain = trim(strip_tags($values->message));
+        $plain = trim(strip_tags($values->message ?? ''));
 
         if (core_text::strlen($plain) <= 20) {
             return format_string($values->message);

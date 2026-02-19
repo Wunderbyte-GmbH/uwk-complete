@@ -192,11 +192,152 @@ class enrolledincourse implements bo_condition {
      * This will be used if the conditions should not only block booking...
      * ... but actually hide the conditons alltogether.
      * @param int $userid
+     * @param array $params This is the array with parameters for the sql query.
      * @return array
      */
-    public function return_sql(int $userid = 0): array {
+    public function return_sql(int $userid = 0, &$params = []): array {
+        global $USER, $DB;
 
-        return ['', '', '', [], ''];
+        if (empty($userid)) {
+            $userid = $USER->id;
+        }
+
+        // Get all courses where the user is enrolled.
+        $usercourses = enrol_get_users_courses($userid);
+        $usercourseids = array_keys($usercourses);
+        $databasetype = $DB->get_dbfamily();
+        $conditionid = $this->id;
+
+        if (empty($usercourseids)) {
+            if ($databasetype == 'postgres') {
+                $where = "
+                    (
+                        availability IS NOT NULL
+                        AND NOT EXISTS (
+                            SELECT 1 FROM jsonb_array_elements(availability::jsonb) AS obj
+                            WHERE (obj->>'id')::int = $conditionid
+                            AND (obj->>'sqlfilter')::text = '1'
+                        )
+                    )";
+            } else if (
+                $databasetype == 'mysql'
+                && db_is_at_least_mariadb_106_or_mysql_8()
+            ) {
+                $where = "
+                    (
+                        availability IS NOT NULL
+                        AND NOT EXISTS (
+                            SELECT 1 FROM JSON_TABLE(availability, '$[*]' COLUMNS (
+                                id INT PATH '$.id',
+                                sqlfilter VARCHAR(10) PATH '$.sqlfilter'
+                            )) AS jt
+                            WHERE jt.id = $conditionid
+                            AND jt.sqlfilter = '1'
+                        )
+                    )";
+            } else {
+                return ["", "", "", $params, ""];
+            }
+            return ["", "", "", $params, $where];
+        }
+
+        if ($databasetype == 'postgres') {
+            // Build lists for PostgreSQL JSON operations.
+            $courseids = array_map(fn($id) => '"' . $id . '"', $usercourseids);
+            $appendwhere1 = implode(', ', $courseids);
+
+            $courseidstext = array_map(fn($id) => "'" . $id . "'", $usercourseids);
+            $appendwhere2 = implode(', ', $courseidstext);
+
+            // Depending on the courseidsoperator check either if user is enrolled in all or at least one courses selected.
+            // Default is AND - all courses must be met by user.
+            $where = "
+            availability IS NOT NULL
+            AND
+            (
+                (
+                    NOT EXISTS (
+                        SELECT 1 FROM jsonb_array_elements(availability::jsonb) AS obj
+                        WHERE (obj->>'id')::int = $conditionid
+                        AND (obj->>'sqlfilter')::text = '1'
+                    )
+                )
+                OR
+                (
+                    CASE
+                    WHEN (availability::jsonb->0->>'courseidsoperator') = 'OR' THEN
+                        EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(availability::jsonb) AS obj
+                            WHERE obj->>'courseids' IS NOT NULL
+                            AND EXISTS (
+                                SELECT 1
+                                FROM jsonb_array_elements_text((obj->'courseids')::jsonb) AS courseids
+                                WHERE courseids::text IN ($appendwhere2)
+                            )
+                        )
+                    ELSE
+                        NOT EXISTS (
+                            SELECT 1
+                            FROM jsonb_array_elements(availability::jsonb) AS obj
+                            WHERE obj->>'courseids' IS NOT NULL
+                            AND NOT (obj->'courseids')::jsonb <@ '[$appendwhere1]'::jsonb
+                        )
+                    END
+                )
+            )";
+            return ['', '', '', $params, $where];
+        } else if (
+            $databasetype == 'mysql'
+            && db_is_at_least_mariadb_106_or_mysql_8()
+        ) {
+            $courseidstext = array_map(fn($id) => "'" . $id . "'", $usercourseids);
+            $appendwhere = implode(', ', $courseidstext);
+
+            $where = "
+                availability IS NOT NULL
+                AND (
+                        (
+                            NOT EXISTS (
+                                SELECT 1 FROM JSON_TABLE(availability, '$[*]' COLUMNS (
+                                    id INT PATH '$.id',
+                                    sqlfilter VARCHAR(10) PATH '$.sqlfilter'
+                                )) AS jt
+                                WHERE jt.id = $conditionid
+                                AND jt.sqlfilter = '1'
+                            )
+                        )
+                    OR (
+                        id IN (
+                            SELECT bo_inner.id
+                            FROM {booking_options} bo_inner
+                            JOIN JSON_TABLE(bo_inner.availability, '$[*]' COLUMNS (
+                                id INT PATH '$.id',
+                                operator VARCHAR(10) PATH '$.courseidsoperator',
+                                courseids JSON PATH '$.courseids'
+                            )) AS jt ON jt.id = $conditionid
+                            WHERE jt.operator IS NOT NULL
+                            AND (
+                                CASE
+                                WHEN jt.operator = 'OR' THEN (
+                                    SELECT COUNT(*) > 0
+                                    FROM JSON_TABLE(jt.courseids, '$[*]' COLUMNS (courseid VARCHAR(10) PATH '$')) AS course_jt
+                                    WHERE course_jt.courseid IN ($appendwhere)
+                                )
+                                ELSE (
+                                    SELECT COUNT(*) = 0
+                                    FROM JSON_TABLE(jt.courseids, '$[*]' COLUMNS (courseid VARCHAR(10) PATH '$')) AS course_jt
+                                    WHERE course_jt.courseid NOT IN ($appendwhere)
+                                )
+                                END
+                            )
+                        )
+                    )
+                )";
+            return ['', '', '', $params, $where];
+        }
+
+        return ["", "", "", $params, ""];
     }
 
     /**
@@ -315,6 +456,13 @@ class enrolledincourse implements bo_condition {
             $mform->hideIf('bo_cond_enrolledincourse_courseids_operator', 'bo_cond_enrolledincourse_restrict', 'notchecked');
 
             $mform->addElement(
+                'advcheckbox',
+                'bo_cond_enrolledincourse_sqlfiltercheck',
+                get_string('sqlfiltercheckstring', 'mod_booking')
+            );
+            $mform->hideIf('bo_cond_enrolledincourse_sqlfiltercheck', 'bo_cond_enrolledincourse_restrict', 'notchecked');
+
+            $mform->addElement(
                 'checkbox',
                 'bo_cond_enrolledincourse_overrideconditioncheckbox',
                 get_string('overrideconditioncheckbox', 'mod_booking')
@@ -423,6 +571,7 @@ class enrolledincourse implements bo_condition {
             $conditionobject->class = $classname;
             $conditionobject->courseids = $fromform->bo_cond_enrolledincourse_courseids;
             $conditionobject->courseidsoperator = $fromform->bo_cond_enrolledincourse_courseids_operator;
+            $conditionobject->sqlfilter = (string) ($fromform->bo_cond_enrolledincourse_sqlfiltercheck ?? 0);
 
             if (!empty($fromform->bo_cond_enrolledincourse_overrideconditioncheckbox)) {
                 $conditionobject->overrides = $fromform->bo_cond_enrolledincourse_overridecondition;
@@ -443,6 +592,7 @@ class enrolledincourse implements bo_condition {
             $defaultvalues->bo_cond_enrolledincourse_restrict = "1";
             $defaultvalues->bo_cond_enrolledincourse_courseids = $acdefault->courseids;
             $defaultvalues->bo_cond_enrolledincourse_courseids_operator = $acdefault->courseidsoperator ?? 'AND';
+            $defaultvalues->bo_cond_enrolledincourse_sqlfiltercheck = $acdefault->sqlfilter ?? "";
         }
         if (!empty($acdefault->overrides)) {
             $defaultvalues->bo_cond_enrolledincourse_overrideconditioncheckbox = "1";

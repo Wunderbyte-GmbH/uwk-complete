@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/hvp/db" VERSION="20190731" COMMENT="XMLDB file for Moodle mod/hvp"
+<XMLDB PATH="mod/hvp/db" VERSION="20221018" COMMENT="XMLDB file for Moodle mod/hvp"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -15,7 +15,7 @@
         <FIELD NAME="embed_type" TYPE="char" LENGTH="127" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="disable" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="main_library_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The library we first instanciate for this node"/>
-        <FIELD NAME="content_type" TYPE="char" LENGTH="127" NOTNULL="false" SEQUENCE="false" COMMENT="Content type as defined in h5p.json"/>
+        <FIELD NAME="contenttype" TYPE="char" LENGTH="127" NOTNULL="false" SEQUENCE="false" COMMENT="Content type as defined in h5p.json"/>
         <FIELD NAME="authors" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="List of authors in json format"/>
         <FIELD NAME="source" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Link to the source, could also be citation"/>
         <FIELD NAME="year_from" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Start year for copyright"/>
@@ -35,6 +35,7 @@
         <FIELD NAME="synced" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="hub_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="a11y_title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="mobilerendermethod" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -75,6 +76,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="user_id-hvp_id-sub_content_id" UNIQUE="false" FIELDS="user_id, hvp_id, sub_content_id"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="hvp_libraries" COMMENT="Stores information about libraries.">
       <FIELDS>
@@ -196,6 +200,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="meta" UNIQUE="false" FIELDS="drop_css"/>
+        <INDEX NAME="library_id-hvp_id-dependency_type" UNIQUE="false" FIELDS="library_id, hvp_id, dependency_type"/>
+        <INDEX NAME="hvp_id" UNIQUE="false" FIELDS="hvp_id"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="hvp_events" COMMENT="Keep track of logged H5P events">

@@ -47,6 +47,7 @@ use mod_booking\event\bookinganswer_presencechanged;
 use mod_booking\event\bookinganswer_notesedited;
 use mod_booking\event\bookinganswer_waitingforconfirmation;
 use mod_booking\event\bookingoption_bookedviaautoenrol;
+use mod_booking\local\certificateclass;
 use mod_booking\local\confirmationworkflow\confirmation;
 use mod_booking\option\dates_handler;
 use mod_booking\bo_actions\actions_info;
@@ -541,9 +542,11 @@ class booking_option {
                 $text = $bookingsettings->beforebookedtext;
             }
         }
-
-        $text = placeholders_info::render_text($text, $this->settings->cmid, $this->settings->id, $userid);
-
+        try {
+            $text = placeholders_info::render_text($text, $this->settings->cmid, $this->settings->id, $userid);
+        } catch (moodle_exception $e) {
+            $text = $e->getMessage();
+        }
         return format_text($text);
     }
 
@@ -2725,14 +2728,15 @@ class booking_option {
                 );
             }
         }
-
         $completionold = $userdata->completed;
         $userdata->completed = empty($completionold) ? '1' : '0';
         $userdata->timemodified = empty($timebooked) ? time() : $timebooked;
+        $completeddate = empty($userdata->completed) ? null : (empty($timebooked) ? time() : $timebooked);
 
         $data = [
             'id' => $userdata->baid,
             'completed' => $userdata->completed,
+            'completeddate' => $completeddate,
             'timemodified' => empty($timebooked) ? time() : $timebooked,
         ];
         $other = [
@@ -2752,8 +2756,11 @@ class booking_option {
                 get_config('booking', 'certificateon')
                 && !get_config('booking', 'presencestatustoissuecertificate')
                 && !empty($userdata->completed)
+                && certificateclass::required_options_fulfilled($this->settings, $userdata->id)
             ) {
-                $certid = certificate::issue_certificate($this->id, $userdata->id, $timebooked);
+                /* If we get a timebooked value, we set the completeddate to that timebooked value, otherwise we set it to now.
+                This is important for imports.*/
+                $certid = certificateclass::issue_certificate($this->id, $userdata->id, $completeddate);
             }
 
             if (
@@ -2835,25 +2842,20 @@ class booking_option {
             get_config('booking', 'usecompetencies')
             && !empty($userdata->completed)
         ) {
+            // Only if we have the competency in the right context AND there is no error, we do it directly.
+            $assigned = false;
             try {
-                $context = context_module::instance($settings->cmid);
-                if (!has_capability('moodle/competency:competencygrade', $context)) {
-                    $task = new assign_competency();
-                    // We need to execute the task as admin user.
-                    $task->set_userid(get_admin()->id);
-                    $task->set_custom_data([
-                        'cmid' => $cmid,
-                        'optionid' => $optionid,
-                        'userid' => $userid,
-                    ]);
-                    manager::queue_adhoc_task($task);
-                } else {
+                $cm = get_coursemodule_from_id(null, $settings->cmid, 0, false, MUST_EXIST);
+                $coursecontext = context_course::instance($cm->course);
+
+                if (has_capability('moodle/competency:competencygrade', $coursecontext)) {
                     // Call your static function in mod_booking.
                     competencies::assign_competencies(
                         $settings->cmid,
                         $optionid,
                         $userid
                     );
+                    $assigned = true;
                 }
             } catch (Throwable $e) {
                 $message = $e->getMessage();
@@ -2868,6 +2870,18 @@ class booking_option {
                     ]);
                     $event->trigger();
                 }
+                $assigned = false;
+            }
+            if (!$assigned) {
+                $task = new assign_competency();
+                // We need to execute the task as admin user.
+                $task->set_userid(get_admin()->id);
+                $task->set_custom_data([
+                    'cmid' => $cmid,
+                    'optionid' => $optionid,
+                    'userid' => $userid,
+                ]);
+                manager::queue_adhoc_task($task);
             }
         }
 
@@ -3020,6 +3034,7 @@ class booking_option {
 
         unset($option->id);
         $option->bookingid = 0;
+        $option->identifier = self::create_truly_unique_option_identifier();
 
         $DB->insert_record("booking_options", $option);
     }
@@ -3885,6 +3900,7 @@ class booking_option {
     public static function purge_cache_for_option(int $optionid) {
 
         cache_helper::purge_by_event('setbackoptionstable');
+        cache_helper::purge_by_event('setbackmyoptionstable');
         cache_helper::invalidate_by_event('setbackoptionsettings', [$optionid]);
 
         // We also need to destroy outdated singletons.
@@ -3895,6 +3911,10 @@ class booking_option {
 
         // We also purge the answers cache.
         self::purge_cache_for_answers($optionid);
+
+        if (class_exists('local_entities\entitiesrelation_handler')) {
+            cache_helper::purge_by_event('purgecachedentities');
+        }
     }
 
     /**

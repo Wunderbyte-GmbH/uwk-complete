@@ -504,6 +504,12 @@ class bo_info {
      */
     public static function return_sql_from_conditions(int $userid) {
         global $PAGE;
+
+        // Check if SQL filter for availability conditions is enabled.
+        if (!get_config('booking', 'usesqlfilteravailability')) {
+            return ['', '', '', [], ''];
+        }
+
         // First, we get all the relevant conditions.
         $conditions = self::get_conditions(MOD_BOOKING_CONDPARAM_MFORM_ONLY);
         $selectall = '';
@@ -534,7 +540,7 @@ class bo_info {
                 $condition = new $class();
             }
 
-            [$select, $from, $filter, $params, $where] = $condition->return_sql($userid);
+            [$select, $from, $filter, $params, $where] = $condition->return_sql($userid, $paramsarray);
 
             $selectall .= $select;
             $fromall .= $from;
@@ -564,9 +570,7 @@ class bo_info {
 
         // For performance reason we have a flag if we need to check the value at all.
         $where = " (
-                        sqlfilter < 1 OR $bypass (
-                            $where
-                            )
+                        sqlfilter < 1 OR $bypass $where
                         )
                         ";
 

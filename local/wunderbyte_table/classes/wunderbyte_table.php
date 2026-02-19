@@ -23,6 +23,7 @@
  */
 
 namespace local_wunderbyte_table;
+use local_wunderbyte_table\local\performance\performance;
 use local_wunderbyte_table\local\sortables\sortable_info;
 use mod_booking\singleton_service;
 
@@ -150,7 +151,7 @@ class wunderbyte_table extends table_sql {
      *
      * @var bool Apply filter on download.
      */
-    public $applyfilterondownload = false;
+    public $applyfilterondownload = true;
 
     /**
      *
@@ -492,8 +493,9 @@ class wunderbyte_table extends table_sql {
      */
     public function lazyout($pagesize, $useinitialsbar, $downloadhelpbutton = '') {
 
+        performance::start_measurement('lazyout');
         [$idnumber, $encodedtable, $html] = $this->lazyouthtml($pagesize, $useinitialsbar, $downloadhelpbutton);
-
+        performance::end_measurement('lazyout');
         echo $html;
     }
 
@@ -705,9 +707,14 @@ class wunderbyte_table extends table_sql {
         $this->setup();
 
         // First we query without the filter.
-        $this->query_db_cached($this->pagesize, $useinitialsbar);
 
+        performance::start_measurement('runquerydb');
+        $this->query_db_cached($this->pagesize, $useinitialsbar);
+        performance::end_measurement('runquerydb');
+
+        performance::start_measurement('runbuildtable');
         $this->build_table();
+        performance::end_measurement('runbuildtable');
         $this->close_recordset();
 
         return $this->finish_output(true, $encodedtable);
@@ -1668,6 +1675,37 @@ class wunderbyte_table extends table_sql {
                     }
                 }
 
+                // Create a list of allowed keys that can be used for filtering.
+                $availablefilters = json_decode($this->filterjson);
+                if (!empty($availablefilters->categories)) {
+                    foreach ($availablefilters->categories as $category) {
+                        $allowedfilters[] = $category->columnname;
+                        // There is an exception for the datepicker: we need to add both the start and end columns as well.
+                        if (
+                            $category->wbfilterclass === 'local_wunderbyte_table\filters\types\datepicker'
+                            &&
+                            is_object($category->datepicker)
+                        ) {
+                            foreach ($category->datepicker->datepickers as $dp) {
+                                if (!empty($dp->startcolumn)) {
+                                    $allowedfilters[] = $dp->startcolumn;
+                                }
+                                if (!empty($dp->endcolumn)) {
+                                    $allowedfilters[] = $dp->endcolumn;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    $allowedfilters = [];
+                }
+
+                // It’s not important to collect a list of columns that have filters, but rather a list of valid column names
+                // that allows us to compare them with the columns posted by the user for filtering, to prevent injection.
+                // For this reason, we merge any column name from any property that likely holds a column name.
+                $allowedfilters = array_merge($allowedfilters, array_keys($this->columns));
+                $allowedfilters = array_unique($allowedfilters);
+
                 foreach ($categoryvalue as $key => $value) {
                     $filter .= ($categorycounter == 1) ? "" : " AND ";
                     $valuecounter = 1;
@@ -1676,7 +1714,22 @@ class wunderbyte_table extends table_sql {
                             // Time values will be concatenated via AND.
                             $filter .= ($valuecounter == 1) ? "" : " AND ";
 
-                            $filter .= $categorykey . ' ' . $operator . ' ' . $timestamp;
+                            // In order to make sure we are dealing with real column names and no sql injection...
+                            if (!in_array($categorykey, $allowedfilters)) {
+                                continue;
+                            }
+
+                            // We check against allowed operators.
+                            $allowedops = ['=', '<', '<=', '>', '>=', '<>', 'like', 'not like',
+                                'in', 'not in', 'between', 'not between', 'is', 'is not', 'rlike', 'not rlike',
+                                'regexp', 'not regexp', 'ilike', 'not ilike'];
+                            if (!in_array($operator, $allowedops, true)) {
+                                continue;
+                            }
+
+                            $paramkey = $this->set_params((string)$timestamp, false);
+                            $filter .= " {$categorykey} {$operator} :{$paramkey} ";
+
                             $valuecounter++;
                         }
                     } else {
@@ -2211,6 +2264,7 @@ class wunderbyte_table extends table_sql {
                 if (
                     !strpos($sql, ':' . $key . ' ')
                     && !strpos($sql, ':' . $key . ')')
+                    && !strpos($sql, ':' . $key . ',')
                     && !strpos($sql, ':' . $key . PHP_EOL)
                 ) {
                         unset($params[$key]);

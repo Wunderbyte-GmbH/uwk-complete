@@ -371,6 +371,16 @@ if ($ADMIN->fulltree) {
             )
         );
 
+        // Use SQL for availability conditions.
+        $settings->add(
+            new admin_setting_configcheckbox(
+                'booking/usesqlfilteravailability',
+                get_string('usesqlfilteravailability', 'mod_booking'),
+                get_string('usesqlfilteravailability_desc', 'mod_booking'),
+                1
+            )
+        );
+
         // Choose which presence options should be vailabile.
 
         $presenceoptions = [
@@ -446,27 +456,14 @@ if ($ADMIN->fulltree) {
         )
     );
 
-    // If the user has the pro version, add a normal checkbox.
-    // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-    /* if ($proversion) {
-        $settings->add(
-            new admin_setting_configcheckbox(
-                'booking/alloptionsinreport',
-                get_string('alloptionsinreport', 'mod_booking'),
-                get_string('alloptionsinreportdesc', 'mod_booking'),
-                0
-            )
-        );
-    } else {
-        For non-pro users, render a disabled checkbox.
-        $settings->add(
-            new admin_setting_configempty(
-                'booking/alloptionsinreport_disabled',
-                get_string('alloptionsinreport', 'mod_booking'),
-                '<input type="checkbox" disabled="disabled" /> ' . get_string('alloptionsinreportdesc', 'mod_booking')
-            )
-        );
-    } */
+    $settings->add(
+        new admin_setting_configcheckbox(
+            'booking/showchecklistdownloadbutton',
+            get_string('showchecklistdownloadbutton', 'mod_booking'),
+            get_string('showchecklistdownloadbutton_desc', 'mod_booking'),
+            0
+        )
+    );
 
     $settings->add(
         new admin_setting_configcheckbox(
@@ -1024,7 +1021,7 @@ if ($ADMIN->fulltree) {
                 get_string('pollurltemplate', 'mod_booking'),
                 trim($description), // HTML will render correctly.
                 '',
-                PARAM_URL
+                PARAM_RAW
             )
         );
 
@@ -1034,7 +1031,7 @@ if ($ADMIN->fulltree) {
                 get_string('pollurlteacherstemplate', 'mod_booking'),
                 trim($description), // HTML will render correctly.
                 '',
-                PARAM_URL
+                PARAM_RAW
             )
         );
     } else {
@@ -1399,6 +1396,15 @@ if ($ADMIN->fulltree) {
             'rulessettings',
             get_string('rulessettings', 'mod_booking'),
             get_string('rulessettingsdesc', 'mod_booking', $linktorules)
+        )
+    );
+
+    $settings->add(
+        new admin_setting_configcheckbox(
+            'booking/sendmessagesforinvisibleoptions',
+            get_string('sendmessagesforinvisibleoptions', 'mod_booking'),
+            get_string('sendmessagesforinvisibleoptions_desc', 'mod_booking'),
+            0
         )
     );
 
@@ -2012,22 +2018,6 @@ if ($ADMIN->fulltree) {
             0
         )
     );
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/attachical',
-            get_string('attachicalfile', 'mod_booking'),
-            get_string('attachicalfile_desc', 'mod_booking'),
-            1
-        )
-    );
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/icalcancel',
-            get_string('icalcancel', 'mod_booking'),
-            get_string('icalcanceldesc', 'mod_booking'),
-            1
-        )
-    );
 
     $options = [
         1 => get_string('courseurl', 'mod_booking'),
@@ -2052,6 +2042,40 @@ if ($ADMIN->fulltree) {
             0
         )
     );
+
+    $icaldescriptionoptions = $customfieldsarray;
+    $coursecategoryarray['currentcategory'] = get_string('currentcategory', 'mod_booking');
+    if ($proversion) {
+            $settings->add(
+                new admin_setting_configselect(
+                    'booking/icaldescriptionfield',
+                    get_string('icaldescriptionfield', 'mod_booking'),
+                    get_string('icaldescriptionfielddesc', 'mod_booking'),
+                    "-1",
+                    $icaldescriptionoptions
+                )
+            );
+            $settings->add(
+                new admin_setting_configselect(
+                    'booking/calendareventdescriptionfield',
+                    get_string('caleventdescriptionfield', 'mod_booking'),
+                    get_string('caleventdescriptionfielddesc', 'mod_booking'),
+                    "-1",
+                    $icaldescriptionoptions
+                )
+            );
+    } else {
+            $settings->add(
+                new admin_setting_heading(
+                    'calcustomdescriptions',
+                    get_string('calcustomdescriptions', 'mod_booking'),
+                    get_string('prolicensefeatures', 'mod_booking') .
+                    get_string('profeatures:calendarcustomdescriptions', 'mod_booking') .
+                    get_string('infotext:prolicensenecessary', 'mod_booking')
+                )
+            );
+    }
+
     $settings->add(
         new admin_setting_heading(
             'mod_booking_signinsheet',

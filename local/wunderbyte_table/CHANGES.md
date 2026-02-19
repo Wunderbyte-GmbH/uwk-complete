@@ -1,3 +1,20 @@
+## Version 3.0.8 (2026020501)
+* Revert "Hotfix: Hierarchical filter remains base class". Use new customfieldfilter class as parent.
+
+## Version 3.0.7 (2026020500)
+* Bugfix: Make sure all filters work again after sql bugfix
+
+## Version 3.0.6 (2026020300)
+* Bugfix: Fix possible SQL injection bug.
+
+## Version 3.0.5 (2026011500)
+* Improvement: Make sure field controllers work with multi-selection in dynamic custom fields and return values (not keys).
+* Improvement: Apply filter on download by default.
+* Improvement: Add performance class and measurements.
+* Bugfix: Moodle 5 bootstrap fix.
+* Bugfix: Cleaning param now works also with :userid, syntax.
+* Bugfix: Fix lazyout measurement.
+
 ## Version 3.0.4 (2025121700)
 * Improvement: Hierarchical filters work with custom fields when they are not joined to the main table.
 * Improvement: FALLBACK: If argument 'urlparamforuserid' is not set, we still try to use 'userid' parameter from URL.

@@ -96,6 +96,10 @@ class mod_booking_generator extends testing_module_generator {
         cache_helper::purge_all();
         singleton_service::destroy_instance();
         singleton_service::reset_campaigns();
+        enrollink::destroy_instances();
+        optionformconfig_info::destroy_singletons();
+        Mod_bookingPrice::destroy_singletons();
+        rules_info::destroy_singletons();
         allowedtobookininstance::reset_instance();
         customform::reset_instance();
         enrolledincohorts::reset_instance();
@@ -108,10 +112,6 @@ class mod_booking_generator extends testing_module_generator {
         selectusers::reset_instance();
         userprofilefield_1_default::reset_instance();
         userprofilefield_2_custom::reset_instance();
-        enrollink::destroy_instances();
-        optionformconfig_info::destroy_singletons();
-        Mod_bookingPrice::destroy_singletons();
-        rules_info::destroy_singletons();
         booking_rules::$rules = [];
         // Shopping cart.
         cartstore::reset();
@@ -656,7 +656,6 @@ class mod_booking_generator extends testing_module_generator {
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
-            'id' => $optionid,
         ];
         [$fields, $from, $where, $params, $filter] =
                 booking::get_options_filter_sql(
@@ -669,10 +668,11 @@ class mod_booking_generator extends testing_module_generator {
                     $wherearray,
                     null,
                     [MOD_BOOKING_STATUSPARAM_BOOKED],
-                    '',
+                    " id=:ctfoooptionid ",
                     '',
                     $showonlyonetable
                 );
+        $params['ctfoooptionid'] = $optionid;
         $showonlyonetable->set_filter_sql($fields, $from, $where, $filter, $params);
 
         $showonlyonetable->printtable(10, true);
@@ -760,15 +760,8 @@ class mod_booking_generator extends testing_module_generator {
                 $task->set_lock($lock);
                 $cronlock->release();
 
-                if ($CFG->version >= 2023042400) {
-                    // Moodle 4.2 and newer.
-                    \core\cron::prepare_core_renderer();
-                    \core\cron::setup_user($user);
-                } else {
-                    // Moodle 4.1 and older.
-                    cron_prepare_core_renderer();
-                    cron_setup_user($user);
-                }
+                \core\cron::prepare_core_renderer();
+                \core\cron::setup_user($user);
 
                 $task->execute();
                 \core\task\manager::adhoc_task_complete($task);
@@ -777,5 +770,61 @@ class mod_booking_generator extends testing_module_generator {
             }
         }
         $tasks->close();
+    }
+
+
+    /**
+     * Compare two stdClass objects and return the differences as an array.
+     *
+     * @param stdClass $obj1
+     * @param stdClass $obj2
+     *
+     * @return array
+     *
+     */
+    public function objdiff(stdClass $obj1, stdClass $obj2): array {
+        $a1 = (array)$obj1;
+        $a2 = (array)$obj2;
+        return $this->arrdiff($a1, $a2);
+    }
+
+    /**
+     * Compare two arrays recursively and return the differences as an array.
+     *
+     * @param array $a1
+     * @param array $a2
+     *
+     * @return array
+     *
+     */
+    public function arrdiff(array $a1, array $a2): array {
+        $r = [];
+        foreach ($a1 as $k => $v) {
+            if (array_key_exists($k, $a2)) {
+                if ($v instanceof stdClass) {
+                    $rad = $this->objdiff($v, $a2[$k]);
+                    if (count($rad)) {
+                        $r[$k] = $rad;
+                    }
+                } else if (is_array($v)) {
+                    $rad = $this->arrdiff($v, $a2[$k]);
+                    if (count($rad)) {
+                        $r[$k] = $rad;
+                    }
+                } else if (is_double($v)) {
+                    // Required to avoid rounding errors due to the conversion from string representation to double.
+                    if (abs($v - $a2[$k]) > 0.000000000001) {
+                        $r[$k] = [$v, $a2[$k]];
+                    }
+                } else {
+                    if ($v != $a2[$k]) {
+                        $r[$k] = [$v, $a2[$k]];
+                    }
+                }
+            } else {
+                $r[$k] = [$v, null];
+            }
+        }
+        return $r;
     }
 }

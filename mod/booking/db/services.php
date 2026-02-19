@@ -166,7 +166,7 @@ $functions = [
     'mod_booking_set_parent_content' => [
         'classname' => 'mod_booking\external\save_option_field_config',
         'description' => 'Returns all possible configurable fields of option form',
-        'type' => 'read',
+        'type' => 'write',
         'capabilities' => '',
         'ajax' => 1,
     ],
@@ -183,6 +183,26 @@ $functions = [
         'type'          => 'write',
         'capabilities'  => 'mod/booking:readresponses',
         'ajax'          => 1,
+    ],
+    'mod_booking_submit_performance' => [
+        'classname'     => 'mod_booking\external\performance',
+        'description' => 'Handle performance submit',
+        'type'        => 'write',
+        'ajax'        => 1,
+    ],
+    'mod_booking_get_performance_chart' => [
+        'classname'   => 'mod_booking\external\get_performance_chart',
+        'methodname'  => 'execute',
+        'description' => 'Get performance chart data by hash',
+        'type'        => 'read',
+        'ajax'        => 1,
+    ],
+    'mod_booking_save_measurement' => [
+        'classname'   => 'mod_booking\\external\\save_measurement',
+        'methodname'  => 'execute',
+        'description' => 'Save performance measurement',
+        'type'        => 'write',
+        'ajax'        => 1,
     ],
 ];
 

@@ -42,11 +42,11 @@ if (\mod_hvp\mobile_auth::has_valid_token($userid, $secret)) {
 // Verify course context.
 $cm = get_coursemodule_from_id('hvp', $id);
 if (!$cm) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 $course = $DB->get_record('course', array('id' => $cm->course));
 if (!$course) {
-    print_error('coursemisconf');
+    throw new moodle_exception('coursemisconf');
 }
 
 try {
@@ -82,12 +82,23 @@ $view->validatecontent();
 // Release session while loading the rest of our assets.
 core\session\manager::write_close();
 
+// Verify is the completion information is being displayed.
+$completiondisplay = false;
+if ($cm->completion != 0) {
+    $completiondisplay = true;
+}
+
+// If there is intro for the activity, we will add height for the embed.
+if (!empty($content['intro'])) {
+    $completiondisplay = true;
+}
+
 // Configure page.
 $PAGE->set_url(new \moodle_url('/mod/hvp/embed.php', array('id' => $id)));
 $PAGE->set_title(format_string($content['title']));
 $PAGE->set_heading($course->fullname);
 
-// Disable activity header on Moodle 4.0+
+// Disable activity header on Moodle 4.0+.
 if ($CFG->branch >= 400) {
     $PAGE->activityheader->disable();
 }
@@ -96,7 +107,7 @@ if ($CFG->branch >= 400) {
 $PAGE->add_body_class('h5p-embed');
 $PAGE->set_pagelayout('embedded');
 $root = \mod_hvp\view_assets::getsiteroot();
-$PAGE->requires->js_call_amd('mod_hvp/embed');
+$PAGE->requires->js_call_amd('mod_hvp/embed', 'init', ['completion' => $completiondisplay]);
 // Add H5P assets to page.
 $view->addassetstopage();
 $view->logviewed();

@@ -22,8 +22,6 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The renderer for the hvp module.
  *
@@ -43,6 +41,15 @@ class mod_hvp_renderer extends plugin_renderer_base {
      * @param string $embedtype Possible values: div, iframe, external, editor
      */
     public function hvp_alter_styles(&$scripts, $libraries, $embedtype) {
+    }
+
+    /**
+     * Alter which stylesheets are loaded for the H5P editor. This is useful for adding
+     * your own custom styles or replacing existing ones for the H5P editor.
+     *
+     * @param array $styles list of stylesheets that will be loaded
+     */
+    public function hvp_alter_editor_styles(&$styles) {
     }
 
     /**

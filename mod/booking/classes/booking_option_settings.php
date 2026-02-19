@@ -234,7 +234,7 @@ class booking_option_settings {
     public $dayofweek = null;
 
     /** @var string $availability in json format */
-    public $availability = null;
+    public $availability = '[]';
 
     /** @var int $status like 1 for cancelled */
     public $status = null;
@@ -457,7 +457,7 @@ class booking_option_settings {
             $this->timemadevisible = $dbrecord->timemadevisible;
             $this->annotation = $dbrecord->annotation;
             $this->dayofweek = $dbrecord->dayofweek;
-            $this->availability = $dbrecord->availability;
+            $this->availability = $dbrecord->availability ?? '[]';
             $this->status = $dbrecord->status;
             $this->responsiblecontact = !empty($dbrecord->responsiblecontact) ? explode(',', $dbrecord->responsiblecontact) : [];
             $this->sqlfilter = $dbrecord->sqlfilter;
@@ -1109,6 +1109,8 @@ class booking_option_settings {
 
                 // We also return the customfieldsfortemplates where we get the real values of the selects.
                 $this->customfieldsfortemplates[$shortname] = [
+                    // Store the whole field object too so we can use it instead of DB calls.
+                    'field' => $field->to_record(),
                     'fieldid' => $fieldid,
                     'label' => $label,
                     'key' => $shortname,

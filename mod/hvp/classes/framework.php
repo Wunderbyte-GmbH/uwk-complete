@@ -24,6 +24,8 @@
 
 namespace mod_hvp;
 
+use mod_hvp\output\mobile;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
@@ -67,6 +69,11 @@ class framework implements \H5PFrameworkInterface {
             $context = \context_system::instance();
             $root = view_assets::getsiteroot();
             $url = "{$root}/pluginfile.php/{$context->id}/mod_hvp";
+
+            $useproxy = get_config('mod_hvp', 'enable_pluginfile_proxy');
+            if (!empty($useproxy)) {
+                $url = "{$root}/mod/hvp/proxy_pluginfile.php/{$context->id}/mod_hvp";
+            }
 
             $language = self::get_language();
 
@@ -1085,13 +1092,13 @@ class framework implements \H5PFrameworkInterface {
 
         // Delete library files.
         $librarybase = $this->getH5pPath() . '/libraries/';
-        $libname = "{$library->name}-{$library->major_version}.{$library->minor_version}";
+        $libname = "{$library->title}-{$library->major_version}.{$library->minor_version}";
         \H5PCore::deleteFileTree("{$librarybase}{$libname}");
 
         // Remove library data from database.
-        $DB->delete('hvp_libraries_libraries', array('library_id' => $library->id));
-        $DB->delete('hvp_libraries_languages', array('library_id' => $library->id));
-        $DB->delete('hvp_libraries', array('id' => $library->id));
+        $DB->delete_records('hvp_libraries_libraries', array('library_id' => $library->id));
+        $DB->delete_records('hvp_libraries_languages', array('library_id' => $library->id));
+        $DB->delete_records('hvp_libraries', array('id' => $library->id));
     }
 
     /**
@@ -1142,10 +1149,11 @@ class framework implements \H5PFrameworkInterface {
             'filtered' => '',
             'disable' => $content['disable'],
             'timemodified' => time(),
+            'mobilerendermethod' => $content['mobilerendermethod'] ?? mobile::RENDER_METHOD_UNSET,
         ));
 
-        if (isset($content[ 'completionpass'])) {
-            $data[ 'completionpass' ] = $content[ 'completionpass' ];
+        if (isset($content['completionpass'])) {
+            $data['completionpass'] = $content['completionpass'];
         }
 
         if (!isset($content['id'])) {
@@ -1513,23 +1521,27 @@ class framework implements \H5PFrameworkInterface {
             'minor_version' => $minorversion
         ));
 
-        $librarydata = array(
-            'libraryId' => $library->id,
-            'machineName' => $library->machine_name,
-            'title' => $library->title,
-            'majorVersion' => $library->major_version,
-            'minorVersion' => $library->minor_version,
-            'patchVersion' => $library->patch_version,
-            'embedTypes' => $library->embed_types,
-            'preloadedJs' => $library->preloaded_js,
-            'preloadedCss' => $library->preloaded_css,
-            'dropLibraryCss' => $library->drop_library_css,
-            'fullscreen' => $library->fullscreen,
-            'runnable' => $library->runnable,
-            'semantics' => $library->semantics,
-            'restricted' => $library->restricted,
-            'hasIcon' => $library->has_icon
-        );
+        if ($library) {
+            $librarydata = array(
+                'libraryId' => $library->id,
+                'machineName' => $library->machine_name,
+                'title' => $library->title,
+                'majorVersion' => $library->major_version,
+                'minorVersion' => $library->minor_version,
+                'patchVersion' => $library->patch_version,
+                'embedTypes' => $library->embed_types,
+                'preloadedJs' => $library->preloaded_js,
+                'preloadedCss' => $library->preloaded_css,
+                'dropLibraryCss' => $library->drop_library_css,
+                'fullscreen' => $library->fullscreen,
+                'runnable' => $library->runnable,
+                'semantics' => $library->semantics,
+                'restricted' => $library->restricted,
+                'hasIcon' => $library->has_icon
+            );
+        } else {
+            return [];
+        }
 
         $dependencies = $DB->get_records_sql(
                 'SELECT hl.id, hl.machine_name, hl.major_version, hl.minor_version, hll.dependency_type

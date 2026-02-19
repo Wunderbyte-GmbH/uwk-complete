@@ -175,7 +175,7 @@ class option extends scope_base {
                     'cmid' => $cmid,
                     'optionid' => $optionid ?? 0,
                 ],
-                'btn btn-primary btn-sm ml-2'
+                'btn btn-primary btn-sm ms-2'
             );
 
             $table->actionbuttons[] = booked_users::create_action_button(
@@ -192,6 +192,7 @@ class option extends scope_base {
                 ]
             );
         }
+        $table->actionbuttons[] = booked_users::create_certificate_button();
 
         if ($statusparam != MOD_BOOKING_STATUSPARAM_DELETED) {
             $table->addcheckboxes = true;

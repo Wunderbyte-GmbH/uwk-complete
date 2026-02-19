@@ -22,6 +22,13 @@ define(['jquery', 'mod_hvp/communicator'], function($, H5PEmbedCommunicator) {
                 var resizeDelay;
                 var instance = H5P.instances[0];
                 var parentIsFriendly = false;
+                var completionheight = 0;
+                if (globalThis.completion) {
+                    var completionactivity = document.getElementsByClassName('activity-header')[0];
+                    var completionmargin = document.defaultView.getComputedStyle(completionactivity, '')
+                        .getPropertyValue('margin-bottom');
+                    completionheight = completionactivity.scrollHeight + parseInt(completionmargin, 10); // We want the first element.
+                }
 
                 // Handle that the resizer is loaded after the iframe.
                 H5PEmbedCommunicator.on('ready', function() {
@@ -41,11 +48,10 @@ define(['jquery', 'mod_hvp/communicator'], function($, H5PEmbedCommunicator) {
                     // Content need to be resized to fit the new iframe size.
                     H5P.trigger(instance, 'resize');
                 });
-
                 // When resize has been prepared tell parent window to resize.
                 H5PEmbedCommunicator.on('resizePrepared', function() {
                     H5PEmbedCommunicator.send('resize', {
-                        scrollHeight: iFrame.contentDocument.body.scrollHeight
+                        scrollHeight: iFrame.contentDocument.body.scrollHeight + ((globalThis.completion) ? completionheight : 0)
                     });
                 });
 
@@ -59,6 +65,7 @@ define(['jquery', 'mod_hvp/communicator'], function($, H5PEmbedCommunicator) {
                     }
 
                     // Use a delay to make sure iframe is resized to the correct size.
+                    // Catalyst change - set the timeout to 1ms to get a more accurate height for some libraries.
                     clearTimeout(resizeDelay);
                     resizeDelay = setTimeout(function() {
                         // Only resize if the iframe can be resized.
@@ -66,13 +73,13 @@ define(['jquery', 'mod_hvp/communicator'], function($, H5PEmbedCommunicator) {
                             H5PEmbedCommunicator.send('prepareResize',
                                 {
                                     scrollHeight: iFrame.contentDocument.body.scrollHeight,
-                                    clientHeight: iFrame.contentDocument.body.clientHeight
+                                    clientHeight: iFrame.contentDocument.body.clientHeight + ((globalThis.completion) ? completionheight : 0)
                                 }
                             );
                         } else {
                             H5PEmbedCommunicator.send('hello');
                         }
-                    }, 0);
+                    }, 1);
                 });
 
                 // Trigger initial resize for instance.
@@ -94,4 +101,13 @@ define(['jquery', 'mod_hvp/communicator'], function($, H5PEmbedCommunicator) {
         });
     });
 
+    return  /** @alias module:mod_hvp/embed */ {
+        /**
+         * Initialise embed instance.
+         * @param {boolean} completion a boolean about displaying the completion information
+         */
+        init: function (completion) {
+            globalThis.completion = completion;
+        },
+    };
 });

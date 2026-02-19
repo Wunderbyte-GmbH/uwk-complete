@@ -57,6 +57,11 @@ if (!defined('MOD_PURPOSE_COLLABORATION')) {
     define('MOD_PURPOSE_COLLABORATION', 'collaboration');
 }
 
+// For versions of Moodle prior to 5.1, we need to define that constant here.
+if (!defined('FEATURE_MOD_OTHERPURPOSE')) {
+    define('FEATURE_MOD_OTHERPURPOSE', 'mod_otherpurpose');
+}
+
 global $choicegrouppublish;
 $choicegrouppublish = [CHOICEGROUP_PUBLISH_ANONYMOUS  => get_string('publishanonymous', 'choicegroup'),
                          CHOICEGROUP_PUBLISH_NAMES      => get_string('publishnames', 'choicegroup'), ];
@@ -1117,6 +1122,8 @@ function choicegroup_supports($feature) {
             return true;
         case FEATURE_MOD_PURPOSE:
             return MOD_PURPOSE_COLLABORATION;
+        case FEATURE_MOD_OTHERPURPOSE:
+            return MOD_PURPOSE_ADMINISTRATION;
         default:
             return null;
     }
@@ -1176,7 +1183,7 @@ function choicegroup_extend_settings_navigation(settings_navigation $settings, n
  * @param stdClass $currentcontext Current context of block
  */
 function choicegroup_page_type_list($pagetype, $parentcontext, $currentcontext) {
-    $modulepagetype = ['mod-choicegroup-*' => get_string('page-mod-choicegroup-x', 'choice')];
+    $modulepagetype = ['mod-choicegroup-*' => get_string('page-mod-choicegroup-x', 'choicegroup')];
     return $modulepagetype;
 }
 

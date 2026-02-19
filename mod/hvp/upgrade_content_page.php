@@ -81,8 +81,8 @@ if (count($versions) < 2) {
             ),
             'libraryBaseUrl' => (new moodle_url('/mod/hvp/ajax.php',
                                  array('action' => 'getlibrarydataforupgrade')))->out(false) . '&library=',
-            'scriptBaseUrl' => (new moodle_url('/mod/hvp/library/js'))->out(false),
-            'buster' => hvp_get_cache_buster(),
+            'scriptBaseUrl' => (new moodle_url('/lib/javascript.php/' . get_jsrev() . '/mod/hvp/library/js'))->out(false),
+            'buster' => '',
             'versions' => $upgrades,
             'contents' => $numcontents,
             'buttonLabel' => get_string('upgradebuttonlabel', 'hvp'),
@@ -94,10 +94,9 @@ if (count($versions) < 2) {
     );
 
     // Add JavaScripts.
-    $liburl = \mod_hvp\view_assets::getsiteroot() . '/mod/hvp/library/';
-    hvp_admin_add_generic_css_and_js($PAGE, $liburl, $settings);
-    $PAGE->requires->js(new moodle_url($liburl . 'js/h5p-version.js' . hvp_get_cache_buster()), true);
-    $PAGE->requires->js(new moodle_url($liburl . 'js/h5p-content-upgrade.js' . hvp_get_cache_buster()), true);
+    hvp_admin_add_generic_css_and_js($PAGE, $settings);
+    $PAGE->requires->js('/mod/hvp/library/js/h5p-version.js', true);
+    $PAGE->requires->js('/mod/hvp/library/js/h5p-content-upgrade.js', true);
     echo $OUTPUT->header();
     echo '<div id="h5p-admin-container">' . get_string('enablejavascript', 'hvp') . '</div>';
 }

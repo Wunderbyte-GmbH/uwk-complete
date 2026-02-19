@@ -64,6 +64,8 @@ $string['removeoldlogentries'] = 'Remove old H5P log entries';
 $string['removeoldmobileauthentries'] = 'Remove old H5P mobile auth entries';
 
 // Admin settings.
+$string['backuplibraries'] = 'Include libraries in backup';
+$string['backuplibraries_help'] = 'Excluding libraries from backup can improve performance during backup. Backups without libraries can only be restored to the same site.';
 $string['displayoptiondownloadnever'] = 'Never';
 $string['displayoptiondownloadalways'] = 'Always';
 $string['displayoptiondownloadpermission'] = 'Only if user has permissions to export H5P';
@@ -96,6 +98,10 @@ $string['contentstatefrequency'] = 'Save content state frequency';
 $string['contentstatefrequency_help'] = 'In seconds, how often do you wish the user to auto save their progress. Increase this number if you\'re having issues with many ajax requests';
 $string['enabledlrscontenttypes'] = 'Enable LRS dependent content types';
 $string['enabledlrscontenttypes_help'] = 'Makes it possible to use content types that rely upon a Learning Record Store to function properly, like the Questionnaire content type.';
+
+$string['proxying_settings_header'] = 'Proxy settings';
+$string['enable_pluginfile_proxy'] = 'Enable pluginfile proxy';
+$string['enable_pluginfile_proxy_help'] = 'Pass requests for h5p files through proxy_pluginfile.php, which has the ability to modify the request.';
 
 // Admin menu.
 $string['contenttypecacheheader'] = 'Content Type Cache';
@@ -482,6 +488,7 @@ $string['emailconfirmsubject'] = 'Submission confirmation: {$a->hvpname}';
 $string['completionpass'] = 'Require passing grade';
 $string['completionpassdesc'] = 'Student must achieve a passing grade to complete this activity';
 $string['completionpass_help'] = 'If enabled, this activity is considered complete when the student receives a pass grade (as specified in the Grade section of the H5P activity settings) or higher.';
+$string['completiondetail:completionpass'] = 'Receive a pass grade';
 $string['gradetopassnotset'] = 'This H5P activity does not yet have a grade to pass set. It may be set in the Grade section of the H5P activity settings.';
 $string['gradetopassmustbeset'] = 'Grade to pass cannot be zero as this H5P activity has its completion method set to require passing grade. Please set a non-zero value.';
 $string['gradeheading'] = 'Results for {$a}';
@@ -603,3 +610,91 @@ $string['emailaddressdescription'] = 'The email address will be used by H5P to r
 $string['copyrightwarning'] = 'Copyrighted material cannot be shared in the H5P Content Hub. If the content is licensed with a OER friendly license like Creative Commons, please choose the appropriate license. If not this content cannot be shared.';
 $string['keywordsexists'] = 'Keywords already exists!';
 $string['somekeywordsexists'] = 'Some of these keywords already exist';
+
+// CLI.
+$string['error:nolibraryexists'] = 'No existing libraries were found matching id or title provided.';
+$string['error:multiplelibrariesfound'] = 'Multiple libraries were found using provided filters. Try using an id.';
+$string['error:invalidversionformat'] = 'Version format is not valid. Must be \'major.minor.patches\'. E.g. \'2.4.1\'';
+$string['error:librarydependency'] = 'The library can\'t be deleted as it is a dependency for other libraries: {$a}';
+$string['cli:help'] = "Command line tool to uninstall h5p libraries. Provide either an id or, a title and version number of the library.
+
+Options:
+    -h --help                   Print this help.
+    --id                        ID of h5p library to be deleted.
+    --title                     Title of h5p library to be deleted (NOT machine_name).
+    --version                   Version of the h5p library in the form of 'major.minor.patch'. E.g. '2.4.1'.
+    -r --run                    Execute uninstall. If this option is not set, then the script will be run in a dry mode.
+
+Examples:
+
+    # php remove_library.php  --id=12
+        A dry run of removing library with id of 12
+
+    # php remove_library.php  --id=12 --run
+        Remove library with id of 12 and any associated activities
+
+    # php remove_library.php  --title='An h5p library' --version=1.0.0
+        A dry run of removing library with name of 'An h5p library 1.0.0'
+
+    # php remove_library.php  --title='An h5p library' --version=1.0.0 --run
+        Remove library with name of 'An h5p library 1.0.0' and any associated activities
+";
+$string['query:help'] = "<p>Script to uninstall h5p libraries. Provide either an id or, a title and version number of the library.</p>
+<p></p>
+<p>Options:</p>
+<p>    --help                   Print this help.</p>
+<p>    --id                     ID of h5p library to be deleted.</p>
+<p>    --title                  Title of h5p library to be deleted (NOT machine_name).</p>
+<p>    --version                Version of the h5p library in the form of 'major.minor.patch'. E.g. '2.4.1'.</p>
+<p>    --run                    Execute uninstall. If this option is not set, then the script will be run in a dry mode.</p></
+<p></p>
+<p>Examples:</p>
+<p></p>
+<p>    # /remove_library.php?id=12</p>
+<p>        A dry run of removing library with id of 12</p>
+<p></p>
+<p>    # /remove_library.php?id=12&run=true</p>
+<p>        Remove library with id of 12 and any associated activities</
+<p></p>
+<p>    # /remove_library.php?title=Test Library&version=1.0.0</p>
+<p>        A dry run of removing library with name of 'Test Library 1.0.0'</p>
+<p></p>
+<p>    # /remove_library.php?title=Test Library&version=1.0.0&run=true</
+<p>        Remove library with name of 'Test Library 1.0.0' and any associated activities</p>
+";
+
+$string['mobileapp:settings:heading'] = 'Mobile app';
+$string['mobileapp:settings:mobilehandler'] = 'Mobile rendering handler';
+$string['mobileapp:settings:mobilehandler_help'] = 'This changes the default for course modules to the bundled mobile handler. Course modules can overwrite this in their settings.The bundled mobile handler has better support for offline functionality, but is more prone to errors. Use the web iframe handler for the best compatibility. See MOBILE.md in the plugin code for more information about this feature.';
+$string['mobilesyncpending'] = "You have completed this H5P, but the completion has not been synchronised yet.";
+$string['mobileloading'] = "H5P assets are still loading. You may notice some broken content until it finishes loading.";
+$string['mobile:rendermethod:webiframe'] = 'Web iframe render method';
+$string['mobile:rendermethod:bundled'] = 'Bundled render method';
+$string['mobile:rendermethod:unset'] = 'Use site default';
+$string['mobilerendermethod'] = 'Mobile app rendering method';
+$string['mobilerendermethod_help'] = 'Sets the render method for this activity only. If uset, uses the value set in the site wide plugin configuration. Do not change this setting if you do not know what it does. See the plugin documentation for more information.';
+$string['mobileapp:settings:mobiledebugging'] = 'Mobile app debugging';
+$string['mobileapp:settings:mobiledebugging_help'] = 'For the bundled mobile render method only. A comma separated list of user ids who should have their hvp mobile javascript logs send back to error_log. Note users entered here will not see any visible difference. Ensure the user has purged the apps cache if this was recently enabled for them.';
+$string['mobileoptions'] = 'Mobile app options';
+
+// Update all libraries.
+$string['updatealllibraries'] = 'Update libraries';
+$string['updatealllibrariesconfirm'] = 'Do you wish to update all libraries (exluding restricted libraries)?';
+$string['updatelibrarytask'] = 'Update library';
+$string['updatedownloadfailed'] = 'Unable to update {$a}: DOWNLOAD_FAILED';
+$string['updateinvalidcontenttype'] = 'Unable to update {$a}: INVALID_CONTENT_TYPE';
+$string['updatevalidationfailed'] = 'Unable to update {$a}: VALIDATION_FAILED';
+
+// Upgrade all content.
+$string['upgradebulkcontent'] = 'Upgrade all content';
+$string['upgradebulkcontentconfirm'] = 'Do you wish to upgrade all content to their latest libraries?';
+$string['upgradebulkinprogress'] = 'Upgrading {$a->from} to {$a->to}...';
+$string['upgradebulkdone'] = 'You have successfully upgraded {$a->count} content instance(s) for {$a->from}.';
+
+// Export libraries.
+$string['exportlibraries'] = 'Export libraries';
+$string['exportlibrarieserror'] = 'An error occured while export the libraries.';
+
+// Restore H5P library.
+$string['restoreinstalldenied'] = 'You do not have permission to install missing content type \'{$a}\'. Please contact your site administrator.';
+$string['restoreinstalldenied_adhoc'] = 'WARNING: H5P content type \'{$a}\' was not installed due to insufficient permission';

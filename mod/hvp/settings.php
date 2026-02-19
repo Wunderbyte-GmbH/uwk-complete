@@ -21,8 +21,15 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_hvp\output\mobile;
+
 // Make sure we are called from an internal Moodle site.
 defined('MOODLE_INTERNAL') || die();
+
+// To avoid phpunit error, do not load anything from this function. It causes conflict with H5P library in Moodle core.
+if (PHPUNIT_TEST) {
+    return;
+}
 
 require_once($CFG->dirroot . '/mod/hvp/lib.php');
 require_once($CFG->dirroot . '/mod/hvp/classes/admin_setting_html.php');
@@ -65,6 +72,15 @@ if ($ADMIN->fulltree) {
             get_string('sendusagestatistics_help', 'hvp',
                 'href="https://h5p.org/tracking-the-usage-of-h5p" target="_blank"'),
             1)
+    );
+
+    // Include libraries in backup.
+    $settings->add(
+        new admin_setting_configcheckbox('mod_hvp_backup_libraries',
+            get_string('backuplibraries', 'hvp'),
+            get_string('backuplibraries_help', 'hvp'),
+            1
+        )
     );
 
     $choices = array(
@@ -120,18 +136,47 @@ if ($ADMIN->fulltree) {
         ''
     ));
 
-    // Content Hub on by default for all users
+    // Content Hub on by default for all users.
     $settings->add(
         new admin_setting_configcheckbox(
-            'mod_hvp/h5p_search_content_hub', 
+            'mod_hvp/h5p_search_content_hub',
             get_string('contenthubsearchenable', 'hvp'),
             get_string('contenthubsearchdescription', 'hvp'), 1));
-    
-    // Register on the Content Hub to allow uploading content
+
+    // Register on the Content Hub to allow uploading content.
     $settings->add(new admin_setting_html(
         'mod_hvp/content_hub_settings_box',
         get_string('contenthub:settings:box', 'hvp'),
         $hubinfo
+    ));
+
+    // Proxying.
+    $settings->add(new admin_setting_heading('mod_hvp/proxying_settings', get_string('proxying_settings_header', 'hvp'), ''));
+    $settings->add(
+        new admin_setting_configcheckbox('mod_hvp/enable_pluginfile_proxy',
+                get_string('enable_pluginfile_proxy', 'hvp'),
+                get_string('enable_pluginfile_proxy_help', 'hvp'), 1));
+    // Mobile app.
+    $settings->add(new admin_setting_heading(
+        'mod_hvp/mobileapp',
+        get_string('mobileapp:settings:heading', 'hvp'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configselect('mod_hvp/mobilehandler',
+        get_string('mobileapp:settings:mobilehandler', 'hvp'),
+        get_string('mobileapp:settings:mobilehandler_help', 'hvp'),
+        mobile::RENDER_METHOD_WEB_IFRAME,
+        [
+            mobile::RENDER_METHOD_WEB_IFRAME => get_string('mobile:rendermethod:webiframe', 'hvp'),
+            mobile::RENDER_METHOD_BUNDLED => get_string('mobile:rendermethod:bundled', 'hvp'),
+        ]
+    ));
+
+    $settings->add(new admin_setting_configtext('mod_hvp/mobiledebugging',
+        get_string('mobileapp:settings:mobiledebugging', 'hvp'),
+        get_string('mobileapp:settings:mobiledebugging_help', 'hvp'),
+        ''
     ));
 
     // Load js for disable hub confirmation dialog functionality.

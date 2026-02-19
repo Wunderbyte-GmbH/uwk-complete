@@ -72,6 +72,9 @@ define('THEME_BOOST_UNION_SETTING_HEIGHT_150PX', '150px');
 define('THEME_BOOST_UNION_SETTING_HEIGHT_200PX', '200px');
 define('THEME_BOOST_UNION_SETTING_HEIGHT_250PX', '250px');
 
+define('THEME_BOOST_UNION_SETTING_COURSEOVERVIEWIMAGESOURCE_COURSEPLUSPATTERN', 'coursepluspattern');
+define('THEME_BOOST_UNION_SETTING_COURSEOVERVIEWIMAGESOURCE_COURSEPLUSFALLBACK', 'courseplusfallback');
+
 define('THEME_BOOST_UNION_SETTING_IMAGEPOSITION_CENTER_CENTER', 'center center');
 define('THEME_BOOST_UNION_SETTING_IMAGEPOSITION_CENTER_TOP', 'center top');
 define('THEME_BOOST_UNION_SETTING_IMAGEPOSITION_CENTER_BOTTOM', 'center bottom');
@@ -203,6 +206,11 @@ function theme_boost_union_get_main_scss_content($theme) {
  */
 function theme_boost_union_get_pre_scss($theme) {
     global $CFG;
+
+    // During the initial installation, we can't access the config table yet, so we return an empty string.
+    if (during_initial_install()) {
+        return '';
+    }
 
     // Require local library.
     require_once($CFG->dirroot . '/theme/boost_union/locallib.php');
@@ -338,14 +346,8 @@ function theme_boost_union_get_pre_scss($theme) {
         $scss .= '$drawer-right-width: ' . get_config('theme_boost_union', 'blockdrawerwidth') . ";\n";
     }
 
-    // Set variables which are influenced by the activityiconcolor* settings.
-    $purposes = [MOD_PURPOSE_ADMINISTRATION,
-            MOD_PURPOSE_ASSESSMENT,
-            MOD_PURPOSE_COLLABORATION,
-            MOD_PURPOSE_COMMUNICATION,
-            MOD_PURPOSE_CONTENT,
-            MOD_PURPOSE_INTERACTIVECONTENT,
-            MOD_PURPOSE_INTERFACE];
+    // Set variables which are influenced by the activityiconcolor* settings (without the 'other' purpose as this is not branded).
+    $purposes = theme_boost_union_get_activity_purposes(false);
     // Iterate over all purposes.
     foreach ($purposes as $purpose) {
         // Get color setting from global settings.
@@ -424,6 +426,11 @@ function theme_boost_union_get_pre_scss($theme) {
  */
 function theme_boost_union_get_extra_scss($theme) {
     global $CFG;
+
+    // During the initial installation, we can't access the config table yet, so we return an empty string.
+    if (during_initial_install()) {
+        return '';
+    }
 
     // Require the necessary libraries.
     require_once($CFG->dirroot . '/course/lib.php');
@@ -682,6 +689,7 @@ function theme_boost_union_pluginfile($course, $cm, $context, $filearea, $args, 
         $context->contextlevel == CONTEXT_SYSTEM && ($filearea === 'backgroundimage' ||
         $filearea === 'loginbackgroundimage' || $filearea === 'additionalresources' ||
                 $filearea === 'customfonts' || $filearea === 'courseheaderimagefallback' ||
+                $filearea === 'courseoverviewimagefallback' ||
                 $filearea === 'touchiconsios' || $filearea === 'uploadedsnippets' ||
                 preg_match("/tilebackgroundimage[2-9]|1[0-2]?/", $filearea) ||
                 preg_match("/slidebackgroundimage[2-9]|1[0-2]?/", $filearea))

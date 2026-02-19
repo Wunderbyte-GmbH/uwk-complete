@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Adds data for tracking when content was created and last modified.
  */
@@ -497,6 +495,9 @@ function hvp_upgrade_2020080400() {
 
 function hvp_upgrade_2020080401() {
     global $DB;
+    $DB->execute("UPDATE {hvp}
+                     SET completionpass = 0
+                   WHERE completionpass IS NULL");
     $dbman = $DB->get_manager();
 
     // Changing nullability of field completionpass on table hvp to not null.
@@ -543,7 +544,8 @@ function hvp_upgrade_2020112600() {
     // Add Content Hub fields to main content table.
     $table = new xmldb_table('hvp');
     if (!$dbman->field_exists($table, 'shared')) {
-        $dbman->add_field($table, new xmldb_field('shared', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0, 'completionpass'));
+        $dbman->add_field($table, new xmldb_field('shared', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0,
+            'completionpass'));
     }
     if (!$dbman->field_exists($table, 'synced')) {
         $dbman->add_field($table, new xmldb_field('synced', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'shared'));
@@ -566,6 +568,81 @@ function hvp_upgrade_2020112600() {
         $dbman->create_table($table);
     }
 }
+
+/**
+ * Add indexes to improve query performance
+ *
+ * Add index for user hvp and sub content in content_user_data
+ * Add index for library_id, hvp_id and dependency_type in contents_libraries
+ * Add index for hvp_id in contents_libraries
+ */
+function hvp_upgrade_2022012001() {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    // Define index user_id-hvp_id-sub_content_id (not unique) to be added to hvp_content_user_data.
+    $table = new xmldb_table('hvp_content_user_data');
+    $index = new xmldb_index('user_id-hvp_id-sub_content_id', XMLDB_INDEX_NOTUNIQUE, ['user_id', 'hvp_id', 'sub_content_id']);
+
+    // Conditionally launch add index user_id-hvp_id-sub_content_id.
+    if (!$dbman->index_exists($table, $index)) {
+        $dbman->add_index($table, $index);
+    }
+
+    // Define index library_id-hvp_id-dependency_type (not unique) to be added to hvp_contents_libraries.
+    $table = new xmldb_table('hvp_contents_libraries');
+    $index = new xmldb_index('library_id-hvp_id-dependency_type', XMLDB_INDEX_NOTUNIQUE,
+        ['library_id', 'hvp_id', 'dependency_type']);
+
+    // Conditionally launch add index library_id-hvp_id-dependency_type.
+    if (!$dbman->index_exists($table, $index)) {
+        $dbman->add_index($table, $index);
+    }
+
+    // Define index hvp_id (not unique) to be added to hvp_contents_libraries.
+    $table = new xmldb_table('hvp_contents_libraries');
+    $index = new xmldb_index('hvp_id', XMLDB_INDEX_NOTUNIQUE, ['hvp_id']);
+
+    // Conditionally launch add index hvp_id.
+    if (!$dbman->index_exists($table, $index)) {
+        $dbman->add_index($table, $index);
+    }
+}
+
+/**
+ * Rename content_type since it was added as a reserved word in Aurora MySQL version 3.06.0.
+ */
+function hvp_upgrade_2023122501() {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    // Rename field content_type on table hvp to contenttype.
+    $table = new xmldb_table('hvp');
+    $field = new xmldb_field('content_type', XMLDB_TYPE_CHAR, '127', null, null, null, null, 'main_library_id');
+
+    // Launch rename field content_type.
+    if ($dbman->field_exists($table, $field)) {
+        $dbman->rename_field($table, $field, 'contenttype');
+    }
+}
+
+/**
+ * Adds mobile render method field
+ */
+function hvp_upgrade_2024112101() {
+    global $DB;
+    $dbman = $DB->get_manager();
+
+    // Define field id to be added to hvp.
+    $table = new xmldb_table('hvp');
+    $field = new xmldb_field('mobilerendermethod', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'a11y_title');
+
+    // Conditionally launch add field id.
+    if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+    }
+}
+
 
 /**
  * Hvp module upgrade function.
@@ -593,6 +670,9 @@ function xmldb_hvp_upgrade($oldversion) {
         2020082800,
         2020091500,
         2020112600,
+        2022012001,
+        2023122501,
+        2024112101,
     ];
 
     foreach ($upgrades as $version) {
